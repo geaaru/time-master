@@ -1,4 +1,4 @@
-module time-master
+module github.com/geaaru/time-master
 
 go 1.14
 
