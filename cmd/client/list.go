@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
-package cmd_node
+package cmd_client
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			err := tm.Load()
 			if err != nil {
-				fmt.Println("Error on load environments:" + err.Error() + "\n")
+				fmt.Println("Error on load data:" + err.Error() + "\n")
 				os.Exit(1)
 			}
 
