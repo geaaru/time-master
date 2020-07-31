@@ -77,7 +77,9 @@ func initCommand(rootCmd *cobra.Command, config *specs.TimeMasterConfig) {
 	config.Viper.BindPFlag("config", pflags.Lookup("config"))
 
 	rootCmd.AddCommand(
+		newClientCommand(config),
 		newPrintCommand(config),
+		newValidateCommand(config),
 	)
 }
 

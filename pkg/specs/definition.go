@@ -32,16 +32,20 @@ type Task interface {
 type Client struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	File        string `json:"-" yaml:"-"`
 
-	Activities []Activity     `json:"activities,omitempty" yaml:"activities,omitempty"`
-	Rates      []ResourceRate `json:"rates,omitempty" yaml:"rates,omitempty"`
+	ActivitiesDirs []string `json:"activities_dirs,omitempty" yaml:"activities_dirs,omitempty"`
+
+	Activities []Activity `json:"activities,omitempty" yaml:"activities,omitempty"`
 }
 
 type Scenario struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	File        string `json:"-" yaml:"-"`
 
 	ResourceCosts []ResourceCost `json:"resources_cost,omitempty" yaml:"resources_cost,omitempty"`
+	Rates         []ResourceRate `json:"rates,omitempty" yaml:"rates,omitempty"`
 
 	NowTime string `json:"now" yaml:"name"`
 }
@@ -50,6 +54,7 @@ type Activity struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
+	File        string `json:"-" yaml:"-"`
 
 	Tasks []Task `json:"tasks,omitempty" yaml:"tasks,omitempty"`
 }
@@ -83,6 +88,7 @@ type Resource struct {
 	Name  string `json:"name" yaml:"name"`
 	Email string `json:"email,omitempty" yaml:"email,omitempty"`
 	Phone string `json:"phone,omitempty" yaml:"phone,omitempty"`
+	File  string `json:"-" yaml:"-"`
 
 	Holidays []ResourceHolidays `json:"holidays,omitempty" yaml:"holidays,omitempty"`
 	Sick     []ResourceSick     `json:"sick,omitempty" yaml:"sick,omitempty"`
