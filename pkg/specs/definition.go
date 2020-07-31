@@ -53,6 +53,7 @@ type Scenario struct {
 type Activity struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
 	File        string `json:"-" yaml:"-"`
 
@@ -62,6 +63,7 @@ type Activity struct {
 type MainTask struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
 	Effort      string `json:"effort" yaml:"effort"`
 
@@ -71,6 +73,7 @@ type MainTask struct {
 type SubTask struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
 
 	Effort string `json:"effort" yaml:"effort"`
