@@ -63,8 +63,9 @@ type (
 		NoOverwriteDirNonDir bool
 		// For each include when creating an archive, the included name will be
 		// replaced with the matching name from this map.
-		RebaseNames map[string]string
-		InUserNS    bool
+		RebaseNames     map[string]string
+		InUserNS        bool
+		ContinueOnError bool
 	}
 )
 
@@ -278,7 +279,9 @@ func ReplaceFileTarWrapper(inputTarStream io.ReadCloser, mods map[string]TarModi
 				return nil
 			}
 
-			header.Name = name
+			if header.Name == "" {
+				header.Name = name
+			}
 			header.Size = int64(len(data))
 			if err := tarWriter.WriteHeader(header); err != nil {
 				return err
@@ -442,7 +445,7 @@ func newTarAppender(idMapping *idtools.IdentityMapping, writer io.Writer, chownO
 }
 
 // canonicalTarName provides a platform-independent and consistent posix-style
-//path for files and directories to be archived regardless of the platform.
+// path for files and directories to be archived regardless of the platform.
 func canonicalTarName(name string, isDir bool) string {
 	name = CanonicalTarNameForPath(name)
 
@@ -495,13 +498,13 @@ func (ta *tarAppender) addTarFile(path, name string) error {
 		}
 	}
 
-	//check whether the file is overlayfs whiteout
-	//if yes, skip re-mapping container ID mappings.
+	// check whether the file is overlayfs whiteout
+	// if yes, skip re-mapping container ID mappings.
 	isOverlayWhiteout := fi.Mode()&os.ModeCharDevice != 0 && hdr.Devmajor == 0 && hdr.Devminor == 0
 
-	//handle re-mapping container ID mappings back to host ID mappings before
-	//writing tar headers/files. We skip whiteout files because they were written
-	//by the kernel and already have proper ownership relative to the host
+	// handle re-mapping container ID mappings back to host ID mappings before
+	// writing tar headers/files. We skip whiteout files because they were written
+	// by the kernel and already have proper ownership relative to the host
 	if !isOverlayWhiteout && !strings.HasPrefix(filepath.Base(hdr.Name), WhiteoutPrefix) && !ta.IdentityMapping.Empty() {
 		fileIDPair, err := getFileUIDGID(fi.Sys())
 		if err != nil {
@@ -570,7 +573,7 @@ func (ta *tarAppender) addTarFile(path, name string) error {
 	return nil
 }
 
-func createTarFile(path, extractDir string, hdr *tar.Header, reader io.Reader, Lchown bool, chownOpts *idtools.Identity, inUserns bool) error {
+func createTarFile(path, extractDir string, hdr *tar.Header, reader io.Reader, Lchown bool, chownOpts *idtools.Identity, inUserns, ContinueOnError bool) error {
 	// hdr.Mode is in linux format, which we can use for sycalls,
 	// but for os.Foo() calls we need the mode converted to os.FileMode,
 	// so use hdrInfo.Mode() (they differ for e.g. setuid bits)
@@ -581,7 +584,7 @@ func createTarFile(path, extractDir string, hdr *tar.Header, reader io.Reader, L
 		// Create directory unless it exists as a directory already.
 		// In that case we just want to merge the two
 		if fi, err := os.Lstat(path); !(err == nil && fi.IsDir()) {
-			if err := os.Mkdir(path, hdrInfo.Mode()); err != nil {
+			if err := os.Mkdir(path, hdrInfo.Mode()); err != nil && !ContinueOnError {
 				return err
 			}
 		}
@@ -937,7 +940,7 @@ loop:
 			parentPath := filepath.Join(dest, parent)
 			if _, err := os.Lstat(parentPath); err != nil && os.IsNotExist(err) {
 				err = idtools.MkdirAllAndChownNew(parentPath, 0777, rootIDs)
-				if err != nil {
+				if err != nil && !options.ContinueOnError {
 					return err
 				}
 			}
@@ -995,7 +998,7 @@ loop:
 			}
 		}
 
-		if err := createTarFile(path, dest, hdr, trBuf, !options.NoLchown, options.ChownOpts, options.InUserNS); err != nil {
+		if err := createTarFile(path, dest, hdr, trBuf, !options.NoLchown, options.ChownOpts, options.InUserNS, options.ContinueOnError); err != nil {
 			return err
 		}
 
