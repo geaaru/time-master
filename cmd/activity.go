@@ -19,26 +19,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
-package specs
+package cmd
 
 import (
-	"gopkg.in/yaml.v2"
+	. "github.com/geaaru/time-master/cmd/activity"
+	specs "github.com/geaaru/time-master/pkg/specs"
+
+	"github.com/spf13/cobra"
 )
 
-func ClientFromYaml(data []byte, file string) (*Client, error) {
-	ans := &Client{}
-	if err := yaml.Unmarshal(data, ans); err != nil {
-		return nil, err
+func newActivityCommand(config *specs.TimeMasterConfig) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "activity [command] [OPTIONS]",
+		Short: "Execute specific operations with activities.",
+		Args:  cobra.NoArgs,
 	}
-	ans.File = file
 
-	return ans, nil
-}
+	cmd.AddCommand(
+		NewListCommand(config),
+	)
 
-func (c *Client) AddActivity(a Activity) {
-	c.Activities = append(c.Activities, a)
-}
-
-func (c *Client) GetActivities() *[]Activity {
-	return &c.Activities
+	return cmd
 }

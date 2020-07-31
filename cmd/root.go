@@ -78,6 +78,7 @@ func initCommand(rootCmd *cobra.Command, config *specs.TimeMasterConfig) {
 
 	rootCmd.AddCommand(
 		newClientCommand(config),
+		newActivityCommand(config),
 		newPrintCommand(config),
 		newValidateCommand(config),
 	)

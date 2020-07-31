@@ -19,26 +19,40 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
-package specs
+package cmd_activity
 
 import (
-	"gopkg.in/yaml.v2"
+	"fmt"
+	"os"
+
+	loader "github.com/geaaru/time-master/pkg/loader"
+	specs "github.com/geaaru/time-master/pkg/specs"
+
+	"github.com/spf13/cobra"
 )
 
-func ClientFromYaml(data []byte, file string) (*Client, error) {
-	ans := &Client{}
-	if err := yaml.Unmarshal(data, ans); err != nil {
-		return nil, err
+func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "list",
+		Short: "list of activities.",
+		Run: func(cmd *cobra.Command, args []string) {
+
+			// Create Instance
+			tm := loader.NewTimeMasterInstance(config)
+
+			err := tm.Load()
+			if err != nil {
+				fmt.Println("Error on load data:" + err.Error() + "\n")
+				os.Exit(1)
+			}
+
+			for _, c := range *tm.GetClients() {
+				for _, a := range *c.GetActivities() {
+					fmt.Println("- " + c.Name + " - " + a.Name + ": " + a.Description)
+				}
+			}
+		},
 	}
-	ans.File = file
 
-	return ans, nil
-}
-
-func (c *Client) AddActivity(a Activity) {
-	c.Activities = append(c.Activities, a)
-}
-
-func (c *Client) GetActivities() *[]Activity {
-	return &c.Activities
+	return cmd
 }
