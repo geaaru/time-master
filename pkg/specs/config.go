@@ -36,16 +36,34 @@ type TimeMasterConfig struct {
 	Viper *v.Viper `yaml:"-" json:"-"`
 
 	General TimeMasterConfigGeneral `mapstructure:"general" json:"general,omitempty" yaml:"general,omitempty"`
+	Logging TimeMasterConfigLogging `mapstructure:"logging" json:"logging,omitempty" yaml:"logging,omitempty"`
 
-	ClientsDirs []string `mapstructure:"clients_dirs,omitempty" json:"clients_dirs,omitempty"`
+	ClientsDirs []string `mapstructure:"clients_dirs,omitempty" json:"clients_dirs,omitempty" yaml:"clients_dirs,omitempty"`
 
-	ResourcesDirs []string `mapstructure:"resources_dirs,omitempty" json:"resources_dirs,omitempty"`
+	ResourcesDirs []string `mapstructure:"resources_dirs,omitempty" json:"resources_dirs,omitempty" yaml:"resources_dirs,omitempty"`
 
-	ScenariosDirs []string `mapstructure:"scenarios_dirs,omitempty" json:"scenarios_dirs,omitempty"`
+	ScenariosDirs []string `mapstructure:"scenarios_dirs,omitempty" json:"scenarios_dirs,omitempty" yaml:"scenarios_dirs,omitempty"`
 }
 
 type TimeMasterConfigGeneral struct {
 	Debug bool `mapstructure:"debug,omitempty" json:"debug,omitempty" yaml:"debug,omitempty"`
+}
+
+type TimeMasterConfigLogging struct {
+	// Path of the logfile
+	Path string `mapstructure:"path"`
+	// Enable/Disable logging to file
+	EnableLogFile bool `mapstructure:"enable_logfile"`
+	// Enable JSON format logging in file
+	JsonFormat bool `mapstructure:"json_format"`
+
+	// Log level
+	Level string `mapstructure:"level"`
+
+	// Enable emoji
+	EnableEmoji bool `mapstructure:"enable_emoji"`
+	// Enable/Disable color in logging
+	Color bool `mapstructure:"color"`
 }
 
 func NewTimeMasterConfig(viper *v.Viper) *TimeMasterConfig {
@@ -61,12 +79,20 @@ func (c *TimeMasterConfig) GetGeneral() *TimeMasterConfigGeneral {
 	return &c.General
 }
 
+func (c *TimeMasterConfig) GetLogging() *TimeMasterConfigLogging {
+	return &c.Logging
+}
+
 func (c *TimeMasterConfig) GetClientsDirs() []string {
 	return c.ClientsDirs
 }
 
 func (c *TimeMasterConfig) GetResourcesDirs() []string {
 	return c.ResourcesDirs
+}
+
+func (c *TimeMasterConfig) GetScenariosDirs() []string {
+	return c.ScenariosDirs
 }
 
 func (c *TimeMasterConfig) Unmarshal() error {
@@ -90,6 +116,14 @@ func (c *TimeMasterConfig) Yaml() ([]byte, error) {
 
 func GenDefault(viper *v.Viper) {
 	viper.SetDefault("general.debug", false)
+
+	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("logging.enable_logfile", false)
+	viper.SetDefault("logging.path", "/var/log/luet.log")
+	viper.SetDefault("logging.json_format", false)
+	viper.SetDefault("logging.enable_emoji", true)
+	viper.SetDefault("logging.color", true)
+
 	viper.SetDefault("clients_dirs", []string{"./clients"})
 	viper.SetDefault("resources_dirs", []string{"./resources"})
 	viper.SetDefault("scenarios_dirs", []string{"./scenarios"})
