@@ -212,6 +212,7 @@ func (i *TimeMasterInstance) LoadClientDir(dir string) error {
 		}
 
 		i.Logger.Debug("Loaded client " + client.Name)
+
 	}
 
 	return nil
@@ -258,7 +259,13 @@ func (i *TimeMasterInstance) LoadClientActivities(clientName, dir string) error 
 			continue
 		}
 
-		client.AddActivity(*activity)
+		if activity.Disabled {
+			i.Logger.Debug("Skipping disabled acivity " + activity.Name)
+		} else {
+			i.Logger.Debug("Loading activity " + activity.Name)
+
+			client.AddActivity(*activity)
+		}
 
 	}
 
