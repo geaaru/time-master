@@ -11,6 +11,7 @@ require (
 	github.com/kyokomi/emoji v2.2.4+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190417123914-21d75270181e
 	github.com/mudler/luet v0.0.0-20200717204249-ffa6fc3829d2
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
 	github.com/spf13/cobra v1.0.0
