@@ -81,13 +81,11 @@ func (i *TimeMasterInstance) GetScenarios() *[]specs.Scenario {
 	return &i.Scenarios
 }
 
-func (i *TimeMasterInstance) GetClientByName(name string) (specs.Client, error) {
-	ans := specs.Client{}
-
-	for _, c := range i.Clients {
+func (i *TimeMasterInstance) GetClientByName(name string) (*specs.Client, error) {
+	for idx, c := range i.Clients {
 		if c.Name == name {
-			return c, nil
+			return &i.Clients[idx], nil
 		}
 	}
-	return ans, errors.New("Client " + name + " not present")
+	return nil, errors.New("Client " + name + " not present")
 }
