@@ -21,14 +21,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package specs
 
-type Task interface {
-	GetName() string
-	GetDepends() []Task
-	GetResource() []string
-	GetPriority() int
-	GetEffort() string
-}
-
 type Client struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -56,34 +48,28 @@ type Activity struct {
 	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
 	File        string `json:"-" yaml:"-"`
+	Disabled    bool   `json:"disabled,omitempty" yaml:"disabled,omitempty"`
 
 	Tasks []Task `json:"tasks,omitempty" yaml:"tasks,omitempty"`
 }
 
-type MainTask struct {
+// General task structure for files specs
+type Task struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
 	Priority    int    `json:"priority" yaml:"priority"`
 	Effort      string `json:"effort" yaml:"effort"`
 
-	Tasks []Task `json:"subtasks,omitempty" yaml:"subtasks,omitempty"`
-}
-
-type SubTask struct {
-	Name        string `json:"name" yaml:"name"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
-	Priority    int    `json:"priority" yaml:"priority"`
-
-	Effort string `json:"effort" yaml:"effort"`
-
 	AllocatedResource []string `json:"resources,omitempty" yaml:"resources,omitempty"`
+
+	Milestone string `json:"milestone,omitempty" yaml:"milestone,omitempty"`
 
 	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 
-	Depends []Task `json:"depends,omitempty" yaml:"depends,omitempty"`
+	Tasks   []Task   `json:"subtasks,omitempty" yaml:"subtasks,omitempty"`
+	Depends []string `json:"depends,omitempty" yaml:"depends,omitempty"`
 }
 
 type Resource struct {

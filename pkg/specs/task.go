@@ -22,26 +22,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
-	"gopkg.in/yaml.v2"
+	time "github.com/geaaru/time-master/pkg/time"
 )
 
-func ActivityFromYaml(data []byte, file string) (*Activity, error) {
-	ans := &Activity{}
-	if err := yaml.Unmarshal(data, ans); err != nil {
-		return nil, err
-	}
-	ans.File = file
-
-	return ans, nil
-}
-
-func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
+func (t *Task) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64
+	var err error
 
-	ans = 0
-	if len(a.Tasks) > 0 {
-		for _, t := range a.Tasks {
-			e, err := t.GetPlannedEffortTotSecs(workHours)
+	if t.Effort != "" {
+		ans, err = time.ParseDuration(t.Effort, workHours)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	if len(t.Tasks) > 0 {
+		for _, subtask := range t.Tasks {
+			e, err := subtask.GetPlannedEffortTotSecs(workHours)
 			if err != nil {
 				return -1, err
 			}
@@ -51,5 +48,4 @@ func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	}
 
 	return ans, nil
-
 }
