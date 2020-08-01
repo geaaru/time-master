@@ -38,6 +38,8 @@ type TimeMasterConfig struct {
 	General TimeMasterConfigGeneral `mapstructure:"general" json:"general,omitempty" yaml:"general,omitempty"`
 	Logging TimeMasterConfigLogging `mapstructure:"logging" json:"logging,omitempty" yaml:"logging,omitempty"`
 
+	Work TimeMasterConfigWork `mapstructure:"work,omitempty" json:"work,omitempty" yaml:"work,omitempty"`
+
 	ClientsDirs []string `mapstructure:"clients_dirs,omitempty" json:"clients_dirs,omitempty" yaml:"clients_dirs,omitempty"`
 
 	ResourcesDirs []string `mapstructure:"resources_dirs,omitempty" json:"resources_dirs,omitempty" yaml:"resources_dirs,omitempty"`
@@ -51,19 +53,24 @@ type TimeMasterConfigGeneral struct {
 
 type TimeMasterConfigLogging struct {
 	// Path of the logfile
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path,omitempty" json:"path,omitempty" yaml:"path,omitempty"`
 	// Enable/Disable logging to file
-	EnableLogFile bool `mapstructure:"enable_logfile"`
+	EnableLogFile bool `mapstructure:"enable_logfile,omitempty" json:"enable_logfile,omitempty" yaml:"enable_logfile,omitempty"`
 	// Enable JSON format logging in file
-	JsonFormat bool `mapstructure:"json_format"`
+	JsonFormat bool `mapstructure:"json_format,omitempty" json:"json_format,omitempty" yaml:"json_format,omitempty"`
 
 	// Log level
-	Level string `mapstructure:"level"`
+	Level string `mapstructure:"level,omitempty" json:"level,omitempty" yaml:"level,omitempty"`
 
 	// Enable emoji
-	EnableEmoji bool `mapstructure:"enable_emoji"`
+	EnableEmoji bool `mapstructure:"enable_emoji,omitempty" json:"enable_emoji,omitempty" yaml:"enable_emoji,omitempty"`
 	// Enable/Disable color in logging
-	Color bool `mapstructure:"color"`
+	Color bool `mapstructure:"color,omitempty" json:"color,omitempty" yaml:"color,omitempty"`
+}
+
+type TimeMasterConfigWork struct {
+	// Default number of hours for day
+	WorkHours int `mapstructure:"work_hours,omitempty" json:"work_hours,omitempty" yaml:"work_hours,omitempty"`
 }
 
 func NewTimeMasterConfig(viper *v.Viper) *TimeMasterConfig {
@@ -73,6 +80,10 @@ func NewTimeMasterConfig(viper *v.Viper) *TimeMasterConfig {
 
 	GenDefault(viper)
 	return &TimeMasterConfig{Viper: viper}
+}
+
+func (c *TimeMasterConfig) GetWork() *TimeMasterConfigWork {
+	return &c.Work
 }
 
 func (c *TimeMasterConfig) GetGeneral() *TimeMasterConfigGeneral {
@@ -116,6 +127,8 @@ func (c *TimeMasterConfig) Yaml() ([]byte, error) {
 
 func GenDefault(viper *v.Viper) {
 	viper.SetDefault("general.debug", false)
+
+	viper.SetDefault("work.work_hours", 8)
 
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.enable_logfile", false)
