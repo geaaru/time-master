@@ -37,6 +37,7 @@ func newActivityCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 	cmd.AddCommand(
 		NewListCommand(config),
+		NewSummaryCommand(config),
 	)
 
 	return cmd
