@@ -22,6 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"errors"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -41,4 +43,14 @@ func (c *Client) AddActivity(a Activity) {
 
 func (c *Client) GetActivities() *[]Activity {
 	return &c.Activities
+}
+
+func (c *Client) GetActivityByName(name string) (*Activity, error) {
+	for idx, a := range c.Activities {
+		if a.Name == name {
+			return &c.Activities[idx], nil
+		}
+	}
+
+	return nil, errors.New("Activity " + name + " not present")
 }
