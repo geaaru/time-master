@@ -22,6 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package loader
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -44,6 +45,12 @@ func (i *TimeMasterInstance) Load() error {
 	for _, dir := range i.Config.GetResourcesDirs() {
 		// Ignore error on load directory
 		i.LoadResourceDir(dir)
+	}
+
+	// Load timesheets
+	for _, dir := range i.Config.GetTimesheetsDirs() {
+		// Ignore error on load directory
+		i.LoadTimesheetsDir(dir)
 	}
 
 	// Load scenarios
@@ -265,6 +272,57 @@ func (i *TimeMasterInstance) LoadClientActivities(clientName, dir string) error 
 			i.Logger.Debug("Loading activity " + activity.Name)
 
 			client.AddActivity(*activity)
+		}
+
+	}
+
+	return nil
+}
+
+func (i *TimeMasterInstance) LoadTimesheetsDir(dir string) error {
+	var regexConfs = regexp.MustCompile(`.yml$|.yaml$`)
+
+	i.Logger.Debug("Checking directory", dir, "...")
+
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		i.Logger.Debug("Skip dir", dir, ":", err.Error())
+		return err
+	}
+
+	for _, file := range files {
+
+		if file.IsDir() {
+			continue
+		}
+
+		if !regexConfs.MatchString(file.Name()) {
+			i.Logger.Debug("File", file.Name(), "skipped.")
+			continue
+		}
+
+		content, err := ioutil.ReadFile(path.Join(dir, file.Name()))
+		if err != nil {
+			i.Logger.Debug("On read file", file.Name(), ":", err.Error())
+			i.Logger.Debug("File", file.Name(), "skipped.")
+			continue
+		}
+
+		agenda, err := specs.AgengaTimesheetFromYaml(content, path.Join(dir, file.Name()))
+		if err != nil {
+			i.Logger.Debug("On parse file", file.Name(), ":", err.Error())
+			i.Logger.Debug("File", file.Name(), "skipped.")
+			continue
+		}
+
+		i.AddAgendaTimesheet(agenda)
+
+		if agenda.Name != "" {
+			i.Logger.Debug(fmt.Sprintf("Loaded agenda %s with %d timesheets.",
+				agenda.Name, len(agenda.Timesheets)))
+		} else {
+			i.Logger.Debug(fmt.Sprintf("Loaded agenda %s with %d timesheets.",
+				path.Base(agenda.File), len(agenda.Timesheets)))
 		}
 
 	}

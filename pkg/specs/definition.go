@@ -112,6 +112,17 @@ type ResourceSick struct {
 	*Period
 }
 
-type ResourceBooking struct {
-	User string `json:"user" yaml:"user"`
+type AgendaTimesheets struct {
+	File string `json:"-" yaml:"-"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	Timesheets []ResourceTimesheet `json:"timesheets" yaml:"timesheets"`
+}
+
+type ResourceTimesheet struct {
+	*Period
+	User     string `json:"user,omitempty" yaml:"user"`
+	Task     string `json:"task" yaml:"task"`
+	Duration string `json:"duration" yaml:"duration"`
+	Note     string `json:"note,omitempty" yaml:"note"`
 }

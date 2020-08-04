@@ -45,6 +45,8 @@ type TimeMasterConfig struct {
 	ResourcesDirs []string `mapstructure:"resources_dirs,omitempty" json:"resources_dirs,omitempty" yaml:"resources_dirs,omitempty"`
 
 	ScenariosDirs []string `mapstructure:"scenarios_dirs,omitempty" json:"scenarios_dirs,omitempty" yaml:"scenarios_dirs,omitempty"`
+
+	TimesheetsDirs []string `mapstructure:"timesheets_dirs,omitempty" json:"timesheets_dirs,omitempty" yaml:"timesheets_dirs,omitempty"`
 }
 
 type TimeMasterConfigGeneral struct {
@@ -106,6 +108,10 @@ func (c *TimeMasterConfig) GetScenariosDirs() []string {
 	return c.ScenariosDirs
 }
 
+func (c *TimeMasterConfig) GetTimesheetsDirs() []string {
+	return c.TimesheetsDirs
+}
+
 func (c *TimeMasterConfig) Unmarshal() error {
 	var err error
 
@@ -140,6 +146,7 @@ func GenDefault(viper *v.Viper) {
 	viper.SetDefault("clients_dirs", []string{"./clients"})
 	viper.SetDefault("resources_dirs", []string{"./resources"})
 	viper.SetDefault("scenarios_dirs", []string{"./scenarios"})
+	viper.SetDefault("timesheets_dirs", []string{"./timesheets"})
 }
 
 func (g *TimeMasterConfigGeneral) HasDebug() bool {

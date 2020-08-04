@@ -29,20 +29,22 @@ import (
 )
 
 type TimeMasterInstance struct {
-	Logger    *log.TmLogger
-	Config    *specs.TimeMasterConfig
-	Clients   []specs.Client
-	Resources []specs.Resource
-	Scenarios []specs.Scenario
+	Logger     *log.TmLogger
+	Config     *specs.TimeMasterConfig
+	Clients    []specs.Client
+	Resources  []specs.Resource
+	Scenarios  []specs.Scenario
+	Timesheets []specs.AgendaTimesheets
 }
 
 func NewTimeMasterInstance(config *specs.TimeMasterConfig) *TimeMasterInstance {
 	ans := &TimeMasterInstance{
-		Config:    config,
-		Logger:    log.NewTmLogger(config),
-		Clients:   []specs.Client{},
-		Resources: []specs.Resource{},
-		Scenarios: []specs.Scenario{},
+		Config:     config,
+		Logger:     log.NewTmLogger(config),
+		Clients:    []specs.Client{},
+		Resources:  []specs.Resource{},
+		Scenarios:  []specs.Scenario{},
+		Timesheets: []specs.AgendaTimesheets{},
 	}
 
 	// Initialize logging
@@ -79,6 +81,14 @@ func (i *TimeMasterInstance) AddScenario(s *specs.Scenario) {
 
 func (i *TimeMasterInstance) GetScenarios() *[]specs.Scenario {
 	return &i.Scenarios
+}
+
+func (i *TimeMasterInstance) GetTimesheets() *[]specs.AgendaTimesheets {
+	return &i.Timesheets
+}
+
+func (i *TimeMasterInstance) AddAgendaTimesheet(t *specs.AgendaTimesheets) {
+	i.Timesheets = append(i.Timesheets, *t)
 }
 
 func (i *TimeMasterInstance) GetClientByName(name string) (*specs.Client, error) {
