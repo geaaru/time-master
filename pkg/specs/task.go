@@ -22,6 +22,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	time "github.com/geaaru/time-master/pkg/time"
 )
 
@@ -48,4 +52,78 @@ func (t *Task) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	}
 
 	return ans, nil
+}
+
+func (t *Task) GetAllTasksAndSubTasksList(fatherName string) []Task {
+	var fullName string
+	ans := []Task{*t}
+
+	if fatherName != "" {
+		fullName = fmt.Sprintf("%s.%s", fatherName, t.Name)
+	} else {
+		fullName = t.Name
+	}
+
+	ans[0].Name = fullName
+
+	for _, st := range t.Tasks {
+		ans = append(ans, st.GetAllTasksAndSubTasksList(fullName)...)
+	}
+
+	return ans
+}
+
+func (t *Task) GetTaskByFullName(fullname string) (*Task, error) {
+	var ans *Task = nil
+
+	leafs := strings.Split(fullname, ".")
+	if len(leafs) == 1 {
+		if leafs[0] == t.Name {
+			return t, nil
+		} else {
+			return nil, errors.New("Invalid task name " + fullname)
+		}
+	}
+
+	mainActivity := leafs[1]
+
+	for idx, st := range t.Tasks {
+		if st.Name == mainActivity {
+			ans = &t.Tasks[idx]
+			break
+		}
+	}
+
+	if ans == nil {
+		return nil, errors.New("No task found with leaf " + mainActivity)
+	}
+
+	return ans.GetTaskByFullName(strings.Join(leafs[1:], "."))
+}
+
+func (t *Task) GetSubTasks() *[]Task {
+	return &t.Tasks
+}
+
+func (t *Task) Validate(ignoreError bool) error {
+	if strings.Contains(t.Name, ".") {
+		if !ignoreError {
+			return errors.New("Invalid task name " + t.Name)
+		}
+		fmt.Println("Warning: Invalid task name " + t.Name)
+	}
+
+	if len(t.Tasks) > 0 {
+		for _, st := range t.Tasks {
+			err := st.Validate(ignoreError)
+			if err != nil {
+				if !ignoreError {
+					return err
+				}
+			}
+		}
+
+	}
+
+	return nil
 }

@@ -38,7 +38,7 @@ func newValidateCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 
-			//		ignoreError, _ := cmd.Flags().GetBool("ignore-errors")
+			ignoreError, _ := cmd.Flags().GetBool("ignore-errors")
 
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
@@ -49,13 +49,11 @@ func newValidateCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				os.Exit(1)
 			}
 
-			/*
-				err = tm.Validate(ignoreError)
-				if err != nil {
-					fmt.Println(err.Error())
-					os.Exit(1)
-				}
-			*/
+			err = tm.Validate(ignoreError)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 
 			fmt.Println("The data are good!")
 		},

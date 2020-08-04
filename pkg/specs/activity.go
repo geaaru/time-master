@@ -22,6 +22,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"errors"
+	"strings"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -51,5 +54,52 @@ func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	}
 
 	return ans, nil
+}
 
+func (a *Activity) GetTasks() *[]Task {
+	return &a.Tasks
+}
+
+func (a *Activity) GetTaskByFullName(name string) (*Task, error) {
+	var ans *Task = nil
+
+	leafs := strings.Split(name, ".")
+	if len(leafs) == 1 {
+		return nil, errors.New("Invalid name " + name + " without .")
+	}
+
+	if leafs[0] != a.Name {
+		return nil, errors.New("Invalid task name " + name + " without prefix " + a.Name)
+	}
+
+	mainActivity := leafs[1]
+
+	for idx, t := range a.Tasks {
+		if t.Name == mainActivity {
+			ans = &a.Tasks[idx]
+			break
+		}
+	}
+
+	if ans == nil {
+		return nil, errors.New("No task found with leaf " + mainActivity)
+	}
+
+	if len(leafs) > 2 {
+		return ans.GetTaskByFullName(strings.Join(leafs[1:], "."))
+	}
+
+	return ans, nil
+}
+
+func (a *Activity) GetAllTasksList() []Task {
+	ans := []Task{}
+
+	if len(a.Tasks) > 0 {
+		for _, t := range a.Tasks {
+			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name)...)
+		}
+	}
+
+	return ans
 }

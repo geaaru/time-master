@@ -49,6 +49,10 @@ type Activity struct {
 	Priority    int    `json:"priority" yaml:"priority"`
 	File        string `json:"-" yaml:"-"`
 	Disabled    bool   `json:"disabled,omitempty" yaml:"disabled,omitempty"`
+	Closed      bool   `json:"closed,omitempty" yaml:"closed,omitempty"`
+
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
 
 	Tasks []Task `json:"tasks,omitempty" yaml:"tasks,omitempty"`
 }

@@ -73,8 +73,10 @@ func initCommand(rootCmd *cobra.Command, config *specs.TimeMasterConfig) {
 	var pflags = rootCmd.PersistentFlags()
 
 	pflags.StringP("config", "c", "", "LXD Compose configuration file")
+	pflags.BoolP("verbose", "v", config.Viper.GetBool("general.debug"), "Verbose output.")
 
 	config.Viper.BindPFlag("config", pflags.Lookup("config"))
+	config.Viper.BindPFlag("general.debug", pflags.Lookup("verbose"))
 
 	rootCmd.AddCommand(
 		newClientCommand(config),
