@@ -89,7 +89,7 @@ type Resource struct {
 
 type Period struct {
 	StartPeriod string `json:"start_period" yaml:"start_period"`
-	EndPeriod   string `json:"end_period,omitempty" yaml:"end_period"`
+	EndPeriod   string `json:"end_period,omitempty" yaml:"end_period,omitempty"`
 }
 
 type ResourceRate struct {
@@ -124,5 +124,5 @@ type ResourceTimesheet struct {
 	User     string `json:"user,omitempty" yaml:"user"`
 	Task     string `json:"task" yaml:"task"`
 	Duration string `json:"duration" yaml:"duration"`
-	Note     string `json:"note,omitempty" yaml:"note"`
+	Note     string `json:"note,omitempty" yaml:"note,omitempty"`
 }
