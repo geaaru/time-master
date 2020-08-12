@@ -34,3 +34,7 @@ func AgengaTimesheetFromYaml(data []byte, file string) (*AgendaTimesheets, error
 
 	return ans, nil
 }
+
+func (a *AgendaTimesheets) AddResourceTimesheet(rt *ResourceTimesheet) {
+	a.Timesheets = append(a.Timesheets, *rt)
+}
