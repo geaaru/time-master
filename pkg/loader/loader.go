@@ -169,6 +169,8 @@ func (i *TimeMasterInstance) LoadResourceDir(dir string) error {
 
 		i.AddResource(resource)
 
+		i.Logger.Debug(fmt.Sprintf(
+			"Loaded resource %20s - %s :check_mark:", resource.User, resource.Name))
 	}
 
 	return nil
