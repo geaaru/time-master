@@ -101,3 +101,18 @@ func Seconds2Duration(sec int64) (string, error) {
 	}
 	return ans, nil
 }
+
+func ParseTimestamp(t string, onlyDate bool) (time.Time, error) {
+	var layout string
+
+	if onlyDate {
+		// PRE: The first word MUST YYYY-MM-DD
+		words := strings.Split(t, " ")
+		t = words[0]
+		layout = "2006-01-02"
+	} else {
+		layout = "2006-01-02 15:04:00"
+	}
+
+	return time.Parse(layout, t)
+}

@@ -22,6 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package time_test
 
 import (
+	"time"
+
 	. "github.com/geaaru/time-master/pkg/time"
 
 	. "github.com/onsi/ginkgo"
@@ -102,6 +104,39 @@ var _ = Describe("Time Test", func() {
 			_, err := Seconds2Duration(int64(-1))
 
 			Expect(err).ShouldNot(BeNil())
+		})
+
+		It("Parse timestamp1", func() {
+			t, err := ParseTimestamp("2020-08-16", true)
+
+			Expect(err).Should(BeNil())
+			Expect(t.Year()).To(Equal(2020))
+			Expect(t.Month()).To(Equal(time.August))
+			Expect(t.Day()).To(Equal(16))
+		})
+
+		It("Parse timestamp2", func() {
+			t, err := ParseTimestamp("2020-08-16 08:00:00", false)
+
+			Expect(err).Should(BeNil())
+			Expect(t.Year()).To(Equal(2020))
+			Expect(t.Month()).To(Equal(time.August))
+			Expect(t.Day()).To(Equal(16))
+			Expect(t.Hour()).To(Equal(8))
+			Expect(t.Minute()).To(Equal(0))
+			Expect(t.Second()).To(Equal(0))
+		})
+
+		It("Parse timestamp3", func() {
+			t, err := ParseTimestamp("2020-08-16 08:00:00", true)
+
+			Expect(err).Should(BeNil())
+			Expect(t.Year()).To(Equal(2020))
+			Expect(t.Month()).To(Equal(time.August))
+			Expect(t.Day()).To(Equal(16))
+			Expect(t.Hour()).To(Equal(0))
+			Expect(t.Minute()).To(Equal(0))
+			Expect(t.Second()).To(Equal(0))
 		})
 	})
 })
