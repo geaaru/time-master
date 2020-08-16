@@ -84,6 +84,7 @@ func initCommand(rootCmd *cobra.Command, config *specs.TimeMasterConfig) {
 		newPrintCommand(config),
 		newValidateCommand(config),
 		newImportCommand(config),
+		newResourceCommand(config),
 	)
 }
 
