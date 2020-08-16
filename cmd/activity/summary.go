@@ -40,9 +40,11 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				fmt.Println("Missing client name")
+				os.Exit(1)
 			}
 			if len(args) > 2 {
 				fmt.Println("Too many arguments")
+				os.Exit(1)
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
