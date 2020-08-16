@@ -75,6 +75,15 @@ func (i *TimeMasterInstance) GetResources() *[]specs.Resource {
 	return &i.Resources
 }
 
+func (i *TimeMasterInstance) GetResourceByUser(user string) *specs.Resource {
+	for idx, r := range i.Resources {
+		if r.User == user {
+			return &i.Resources[idx]
+		}
+	}
+	return nil
+}
+
 func (i *TimeMasterInstance) AddScenario(s *specs.Scenario) {
 	i.Scenarios = append(i.Scenarios, *s)
 }
