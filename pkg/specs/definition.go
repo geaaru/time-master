@@ -77,14 +77,15 @@ type Task struct {
 }
 
 type Resource struct {
-	User  string `json:"user" yaml:"user"`
-	Name  string `json:"name" yaml:"name"`
-	Email string `json:"email,omitempty" yaml:"email,omitempty"`
-	Phone string `json:"phone,omitempty" yaml:"phone,omitempty"`
-	File  string `json:"-" yaml:"-"`
+	User  string   `json:"user" yaml:"user"`
+	Name  string   `json:"name" yaml:"name"`
+	Email []string `json:"email,omitempty" yaml:"email,omitempty"`
+	Phone []string `json:"phone,omitempty" yaml:"phone,omitempty"`
+	File  string   `json:"-" yaml:"-"`
 
-	Holidays []ResourceHolidays `json:"holidays,omitempty" yaml:"holidays,omitempty"`
-	Sick     []ResourceSick     `json:"sick,omitempty" yaml:"sick,omitempty"`
+	Holidays   []ResourceHolidays   `json:"holidays,omitempty" yaml:"holidays,omitempty"`
+	Sick       []ResourceSick       `json:"sick,omitempty" yaml:"sick,omitempty"`
+	Unemployed []ResourceUnemployed `json:"unemployed,omitempty" yaml:"unemployed,omitempty"`
 }
 
 type Period struct {
@@ -108,6 +109,10 @@ type ResourceHolidays struct {
 	*Period
 }
 
+type ResourceUnemployed struct {
+	*Period
+}
+
 type ResourceSick struct {
 	*Period
 }
@@ -119,10 +124,26 @@ type AgendaTimesheets struct {
 	Timesheets []ResourceTimesheet `json:"timesheets" yaml:"timesheets"`
 }
 
+// ResourceTimesheet contains the description of the user
+// timesheet for one single day. Multiple days range aren't supported.
 type ResourceTimesheet struct {
 	*Period
-	User     string `json:"user,omitempty" yaml:"user"`
+	User     string `json:"user" yaml:"user"`
 	Task     string `json:"task" yaml:"task"`
 	Duration string `json:"duration" yaml:"duration"`
 	Note     string `json:"note,omitempty" yaml:"note,omitempty"`
+}
+
+type ResourceTsAggregated struct {
+	*Period
+	User     string `json:"user,omitempty" yaml:"user,omitempty"`
+	Task     string `json:"task,omitempty" yaml:"task,omitempty"`
+	Duration string `json:"duration" yaml:"duration"`
+	Seconds  int64  `json:"-" yaml:"-"`
+}
+
+type TimesheetResearch struct {
+	ByUser  bool
+	ByTask  bool
+	Monthly bool
 }
