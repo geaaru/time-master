@@ -45,11 +45,19 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				fmt.Println("Missing user")
 				os.Exit(1)
 			}
+
+			byTask, _ := cmd.Flags().GetBool("by-tasks")
+			ignoreTime, _ := cmd.Flags().GetBool("ignore-time")
+			if ignoreTime && !byTask {
+				fmt.Println("With ignore-time it's needed by-tasks")
+				os.Exit(1)
+			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			monthly, _ := cmd.Flags().GetBool("monthly")
 			byTask, _ := cmd.Flags().GetBool("by-tasks")
+			ignoreTime, _ := cmd.Flags().GetBool("ignore-time")
 			from, _ := cmd.Flags().GetString("from")
 			to, _ := cmd.Flags().GetString("to")
 
@@ -82,10 +90,11 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			rtaMap := make(map[string]specs.ResourceTsAggregated, 0)
 			for _, rta := range *rtaList {
 				var key string
-				if byTask {
-					key = rta.Period.StartPeriod + " - " + rta.Task
-				} else {
+				if !ignoreTime {
 					key = rta.Period.StartPeriod
+				}
+				if byTask {
+					key += " - " + rta.Task
 				}
 				dates = append(dates, key)
 				rtaMap[key] = rta
@@ -102,35 +111,41 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				Top:    true,
 				Right:  true,
 				Bottom: true})
-			if monthly {
-				dateStr = "Month"
-			} else {
-				dateStr = "Date"
+
+			header := []string{}
+			if !ignoreTime {
+				if monthly {
+					dateStr = "Month"
+				} else {
+					dateStr = "Date"
+				}
+				header = append(header, dateStr)
 			}
 
 			if byTask {
-				table.SetHeader([]string{dateStr, "Task", "Effort"})
-			} else {
-				table.SetHeader([]string{dateStr, "Effort"})
+				header = append(header, "Task")
 			}
+			header = append(header, "Effort")
+			table.SetHeader(header)
 			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 
 			for _, d := range dates {
 				rta := rtaMap[d]
 				totEffort += rta.GetSeconds()
-				if byTask {
-					table.Append([]string{
-						rta.Period.StartPeriod, rta.Task, rta.GetDuration(),
-					})
-				} else {
-					table.Append([]string{
-						rta.Period.StartPeriod, rta.GetDuration(),
-					})
+				row := []string{}
+				if !ignoreTime {
+					row = append(row, rta.Period.StartPeriod)
 				}
+				if byTask {
+					row = append(row, rta.Task)
+				}
+				row = append(row, rta.GetDuration())
+
+				table.Append(row)
 			}
 
 			duration, err := time.Seconds2Duration(totEffort)
-			if byTask {
+			if byTask && !ignoreTime {
 				table.SetFooter([]string{
 					"Total",
 					"",
@@ -150,9 +165,11 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags := cmd.Flags()
 	flags.BoolP("monthly", "m", false, "Timesheets aggregated for month instead of day.")
 	flags.Bool("by-tasks", false, "Timesheets aggregated for task.")
+	flags.Bool("ignore-time", false, "Timesheets aggregated without monthly/daily aggregation.")
 	flags.String("from", "", "Specify from date in format YYYY-MM-DD.")
 	flags.String("to", "", "Specify to date in format YYYY-MM-DD.")
-	flags.StringSliceVarP(&tasks, "tasks", "t", []string{}, "Filter for tasks with regex string.")
+	flags.StringSliceVarP(&tasks, "tasks", "t", []string{},
+		"Filter for tasks with regex string.")
 
 	return cmd
 }

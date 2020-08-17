@@ -143,7 +143,8 @@ type ResourceTsAggregated struct {
 }
 
 type TimesheetResearch struct {
-	ByUser  bool
-	ByTask  bool
-	Monthly bool
+	ByUser     bool
+	ByTask     bool
+	Monthly    bool
+	IgnoreTime bool
 }

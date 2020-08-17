@@ -42,12 +42,20 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		Use:   "show",
 		Short: "Show timesheets summary.",
 		PreRun: func(cmd *cobra.Command, args []string) {
+			byTask, _ := cmd.Flags().GetBool("by-tasks")
+			byUser, _ := cmd.Flags().GetBool("by-users")
+			ignoreTime, _ := cmd.Flags().GetBool("ignore-time")
+			if ignoreTime && !byTask && !byUser {
+				fmt.Println("With ignore-time it's needed by-tasks or by-users")
+				os.Exit(1)
+			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			monthly, _ := cmd.Flags().GetBool("monthly")
 			byTask, _ := cmd.Flags().GetBool("by-tasks")
 			byUser, _ := cmd.Flags().GetBool("by-users")
+			ignoreTime, _ := cmd.Flags().GetBool("ignore-time")
 			from, _ := cmd.Flags().GetString("from")
 			to, _ := cmd.Flags().GetString("to")
 
@@ -78,7 +86,10 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			dates := []string{}
 			rtaMap := make(map[string]specs.ResourceTsAggregated, 0)
 			for _, rta := range *rtaList {
-				var key string = rta.Period.StartPeriod
+				var key string
+				if !ignoreTime {
+					key = rta.Period.StartPeriod
+				}
 				if byUser {
 					key += " - " + rta.User
 				}
@@ -101,22 +112,29 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				Right:  true,
 				Bottom: true})
 
-			if monthly {
-				dateStr = "Month"
-			} else {
-				dateStr = "Date"
-			}
-			headers := []string{dateStr}
+			headers := []string{}
 			footer := []string{"Total"}
 
+			if !ignoreTime {
+				if monthly {
+					dateStr = "Month"
+				} else {
+					dateStr = "Date"
+				}
+				headers = append(headers, dateStr)
+			}
 			if byUser {
 				headers = append(headers, "User")
-				footer = append(footer, "")
+				if !ignoreTime {
+					footer = append(footer, "")
+				}
 			}
 
 			if byTask {
 				headers = append(headers, "Task")
-				footer = append(footer, "")
+				if (ignoreTime && byUser) || !ignoreTime {
+					footer = append(footer, "")
+				}
 			}
 
 			headers = append(headers, "Effort")
@@ -126,8 +144,12 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			for _, d := range dates {
 				rta := rtaMap[d]
 				totEffort += rta.GetSeconds()
-				row := []string{rta.Period.StartPeriod}
 
+				row := []string{}
+
+				if !ignoreTime {
+					row = append(row, rta.Period.StartPeriod)
+				}
 				if byUser {
 					row = append(row, rta.User)
 				}
@@ -149,6 +171,8 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.BoolP("monthly", "m", false, "Timesheets aggregated for month instead of day.")
 	flags.Bool("by-tasks", false, "Timesheets aggregated for tasks.")
 	flags.Bool("by-users", false, "Timesheets aggregated for users.")
+	flags.Bool("ignore-time", false,
+		"Timesheets aggregated without monthly/daily aggregation.")
 	flags.String("from", "", "Specify from date in format YYYY-MM-DD.")
 	flags.String("to", "", "Specify to date in format YYYY-MM-DD.")
 	flags.StringSliceVarP(&tasks, "tasks", "t", []string{}, "Filter for tasks with regex string.")

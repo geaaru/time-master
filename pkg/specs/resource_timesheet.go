@@ -23,6 +23,7 @@ package specs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/geaaru/time-master/pkg/time"
 )
@@ -52,29 +53,31 @@ func (rt *ResourceTimesheet) GetMonth(onlyDate bool) (string, error) {
 }
 
 func (rt *ResourceTimesheet) GetMapKey(opts TimesheetResearch, onlyDate bool) (string, error) {
-	var ans string
+	var ans string = ""
 
 	date, err := time.ParseTimestamp(rt.Period.StartPeriod, onlyDate)
 	if err != nil {
 		return "", err
 	}
 
-	if opts.ByUser && opts.ByTask && opts.Monthly {
-		ans = fmt.Sprintf("%s-%s-%d-%d", rt.User, rt.Task, date.Year(), date.Month())
-	} else if opts.ByUser && opts.ByTask {
-		ans = fmt.Sprintf("%s-%s-%s-%d-%d-%d", rt.User, rt.Task, date.Year(), date.Month(), date.Day())
-	} else if opts.ByUser && !opts.ByTask && opts.Monthly {
-		ans = fmt.Sprintf("%s-%d-%d", rt.User, date.Year(), date.Month())
-	} else if opts.ByUser && !opts.ByTask {
-		ans = fmt.Sprintf("%s-%d-%d-%d", rt.User, date.Year(), date.Month(), date.Day())
-	} else if !opts.ByUser && opts.ByTask && opts.Monthly {
-		ans = fmt.Sprintf("%s-%d-%02d", rt.Task, date.Year(), date.Month())
-	} else if !opts.ByUser && opts.ByTask {
-		ans = fmt.Sprintf("%s-%d-%02d-%02d", rt.Task, date.Year(), date.Month(), date.Day())
-	} else if !opts.ByUser && !opts.ByTask && opts.Monthly {
-		ans = fmt.Sprintf("%d-%02d", date.Year(), date.Month())
-	} else if !opts.ByUser && !opts.ByTask {
-		ans = fmt.Sprintf("%d-%02d-%02d", date.Year(), date.Month(), date.Day())
+	if opts.ByUser {
+		ans += fmt.Sprintf("%s-", rt.User)
+	}
+
+	if opts.ByTask {
+		ans += fmt.Sprintf("%s-", rt.Task)
+	}
+
+	if !opts.IgnoreTime {
+		if opts.Monthly {
+			ans += fmt.Sprintf("%d-%02d", date.Year(), date.Month())
+		} else {
+			ans += fmt.Sprintf("%d-%02d-%02d", date.Year(), date.Month(), date.Day())
+		}
+	}
+
+	if strings.HasSuffix(ans, "-") {
+		ans = ans[:len(ans)-1]
 	}
 
 	return ans, nil
