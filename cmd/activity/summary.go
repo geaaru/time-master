@@ -33,6 +33,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity string) (string, error) {
+
+	researchOpts := specs.TimesheetResearch{
+		ByActivity: true,
+		IgnoreTime: true,
+	}
+
+	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, "", "", []string{}, []string{activity})
+	if err != nil {
+		return "", err
+	}
+
+	if len(*rtaList) > 0 {
+		return (*rtaList)[0].GetDuration(), nil
+	}
+	return "0", nil
+}
+
 func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "summary <client-name> <activity-name>",
@@ -75,7 +93,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				Top:    true,
 				Right:  true,
 				Bottom: true})
-			table.SetHeader([]string{"Name", "Description", "# Tasks", "Effort"})
+			table.SetHeader([]string{"Name", "Description", "# Tasks", "Work", "Effort"})
 			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 			table.SetColMinWidth(1, 60)
 			table.SetColWidth(100)
@@ -96,10 +114,18 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				}
 				duration, err = time.Seconds2Duration(effort)
 
+				// Retrieve work time
+				work, err := retrieveWorkTimeByActivity(tm, activity.Name)
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+
 				table.Append([]string{
 					activity.Name,
 					activity.Description,
 					fmt.Sprintf("%d", len(activity.Tasks)),
+					work,
 					duration,
 				})
 
@@ -116,10 +142,18 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					}
 					duration, err = time.Seconds2Duration(effort)
 
+					// Retrieve work time
+					work, err := retrieveWorkTimeByActivity(tm, activity.Name)
+					if err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
+
 					table.Append([]string{
 						activity.Name,
 						activity.Description,
 						fmt.Sprintf("%d", len(activity.Tasks)),
+						work,
 						duration,
 					})
 
@@ -131,6 +165,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			duration, err = time.Seconds2Duration(totEffort)
 			table.SetFooter([]string{
 				"Total",
+				"",
 				"",
 				"",
 				duration,
