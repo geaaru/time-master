@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity string) (string, error) {
+func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity string) (string, int64, error) {
 
 	researchOpts := specs.TimesheetResearch{
 		ByActivity: true,
@@ -42,13 +42,13 @@ func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity string) 
 
 	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, "", "", []string{}, []string{activity})
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	if len(*rtaList) > 0 {
-		return (*rtaList)[0].GetDuration(), nil
+		return (*rtaList)[0].GetDuration(), (*rtaList)[0].GetSeconds(), nil
 	}
-	return "0", nil
+	return "0", 0, nil
 }
 
 func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
@@ -85,15 +85,17 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			var duration string
 			var totEffort int64
+			var totWork int64
 
 			totEffort = 0
+			totWork = 0
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetBorders(tablewriter.Border{
 				Left:   true,
 				Top:    true,
 				Right:  true,
 				Bottom: true})
-			table.SetHeader([]string{"Name", "Description", "# Tasks", "Work", "Effort"})
+			table.SetHeader([]string{"Name", "Description", "# Tasks", "% (of Plan)", "Work", "Effort"})
 			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 			table.SetColMinWidth(1, 60)
 			table.SetColWidth(100)
@@ -115,21 +117,28 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				duration, err = time.Seconds2Duration(effort)
 
 				// Retrieve work time
-				work, err := retrieveWorkTimeByActivity(tm, activity.Name)
+				work, workSecs, err := retrieveWorkTimeByActivity(tm, activity.Name)
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
+				}
+
+				perc := ""
+				if workSecs > 0 {
+					perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
 				}
 
 				table.Append([]string{
 					activity.Name,
 					activity.Description,
 					fmt.Sprintf("%d", len(activity.Tasks)),
+					perc,
 					work,
 					duration,
 				})
 
 				totEffort += effort
+				totWork += workSecs
 			} else {
 
 				// Print all activities
@@ -143,31 +152,40 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					duration, err = time.Seconds2Duration(effort)
 
 					// Retrieve work time
-					work, err := retrieveWorkTimeByActivity(tm, activity.Name)
+					work, workSecs, err := retrieveWorkTimeByActivity(tm, activity.Name)
 					if err != nil {
 						fmt.Println(err.Error())
 						os.Exit(1)
+					}
+
+					perc := ""
+					if workSecs > 0 {
+						perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
 					}
 
 					table.Append([]string{
 						activity.Name,
 						activity.Description,
 						fmt.Sprintf("%d", len(activity.Tasks)),
+						perc,
 						work,
 						duration,
 					})
 
 					totEffort += effort
+					totWork += workSecs
 				}
 
 			}
 
 			duration, err = time.Seconds2Duration(totEffort)
+			durationWork, err := time.Seconds2Duration(totWork)
 			table.SetFooter([]string{
 				"Total",
 				"",
 				"",
 				"",
+				durationWork,
 				duration,
 			})
 
