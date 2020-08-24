@@ -27,7 +27,7 @@ Flags:
   -p, --target-prefix string      Prefix of the file/files to create.
 
 Global Flags:
-  -c, --config string   LXD Compose configuration file
+  -c, --config string   Time Master configuration file
   -v, --verbose         Verbose output.
 ```
 
