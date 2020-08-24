@@ -23,6 +23,7 @@ package loader
 
 import (
 	"regexp"
+	"strings"
 	"time"
 
 	specs "github.com/geaaru/time-master/pkg/specs"
@@ -85,7 +86,10 @@ func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearc
 					date, _ = rt.GetDate(true)
 				}
 
-				if opts.ByTask {
+				if opts.ByActivity {
+					leafs := strings.Split(rt.Task, ".")
+					task = leafs[0]
+				} else if opts.ByTask {
 					task = rt.Task
 				}
 				if opts.ByUser {

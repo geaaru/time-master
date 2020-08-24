@@ -64,7 +64,10 @@ func (rt *ResourceTimesheet) GetMapKey(opts TimesheetResearch, onlyDate bool) (s
 		ans += fmt.Sprintf("%s-", rt.User)
 	}
 
-	if opts.ByTask {
+	if opts.ByActivity {
+		leafs := strings.Split(rt.Task, ".")
+		ans += fmt.Sprintf("%s-", leafs[0])
+	} else if opts.ByTask {
 		ans += fmt.Sprintf("%s-", rt.Task)
 	}
 
