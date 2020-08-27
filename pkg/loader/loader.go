@@ -263,7 +263,7 @@ func (i *TimeMasterInstance) LoadClientActivities(clientName, dir string) error 
 
 		activity, err := specs.ActivityFromYaml(content, path.Join(dir, file.Name()))
 		if err != nil {
-			i.Logger.Debug("On parse file", file.Name(), ":", err.Error())
+			i.Logger.Warning("On parse file", file.Name(), ":", err.Error())
 			i.Logger.Debug("File", file.Name(), "skipped.")
 			continue
 		}
