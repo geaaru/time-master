@@ -38,6 +38,10 @@ func ActivityFromYaml(data []byte, file string) (*Activity, error) {
 	return ans, nil
 }
 
+func (a *Activity) IsClosed() bool {
+	return a.Closed
+}
+
 func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64
 

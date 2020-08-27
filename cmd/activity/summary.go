@@ -67,6 +67,9 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
+			onlyClosed, _ := cmd.Flags().GetBool("only-closed")
+			closed, _ := cmd.Flags().GetBool("closed")
+
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
 
@@ -99,6 +102,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 			table.SetColMinWidth(1, 60)
 			table.SetColWidth(100)
+			nActivity := 0
 
 			if len(args) == 2 {
 				aname := args[1]
@@ -144,6 +148,14 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				// Print all activities
 				for _, activity := range *client.GetActivities() {
 
+					if onlyClosed {
+						if !activity.IsClosed() {
+							continue
+						}
+					} else if !closed && activity.IsClosed() {
+						continue
+					}
+
 					effort, err := activity.GetPlannedEffortTotSecs(config.GetWork().WorkHours)
 					if err != nil {
 						fmt.Println(err.Error())
@@ -172,6 +184,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						duration,
 					})
 
+					nActivity += 1
 					totEffort += effort
 					totWork += workSecs
 				}
@@ -180,18 +193,27 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			duration, err = time.Seconds2Duration(totEffort)
 			durationWork, err := time.Seconds2Duration(totWork)
-			table.SetFooter([]string{
-				"Total",
-				"",
-				"",
-				"",
-				durationWork,
-				duration,
-			})
 
-			table.Render()
+			if nActivity == 0 {
+				fmt.Sprintf("No activities found")
+			} else {
+				table.SetFooter([]string{
+					fmt.Sprintf("Total (%d)", nActivity),
+					"",
+					"",
+					"",
+					durationWork,
+					duration,
+				})
+
+				table.Render()
+			}
 		},
 	}
+
+	flags := cmd.Flags()
+	flags.Bool("closed", false, "Include closed activities.")
+	flags.Bool("only-closed", false, "Show only closed activities.")
 
 	return cmd
 }
