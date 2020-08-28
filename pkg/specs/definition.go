@@ -149,3 +149,18 @@ type TimesheetResearch struct {
 	Monthly    bool
 	IgnoreTime bool
 }
+
+type TaskResearch struct {
+	ClosedActivity     bool
+	OnlyClosedActivity bool
+	Milestone          bool
+	OnlyMilestone      bool
+	WithEffort         bool
+	Users              []string
+	Flags              []string
+	ActivityFlags      []string
+	Labels             []string
+	ActivityLabels     []string
+	Tasks              []string
+	Clients            []string
+}
