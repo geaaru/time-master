@@ -54,7 +54,11 @@ func (t *Task) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	return ans, nil
 }
 
-func (t *Task) GetAllTasksAndSubTasksList(fatherName string) []Task {
+func (t *Task) GetEffort() string {
+	return t.Effort
+}
+
+func (t *Task) GetAllTasksAndSubTasksList(fatherName string, fatherResources []string) []Task {
 	var fullName string
 	ans := []Task{*t}
 
@@ -66,8 +70,14 @@ func (t *Task) GetAllTasksAndSubTasksList(fatherName string) []Task {
 
 	ans[0].Name = fullName
 
+	// If task is without resources I allocate father
+	// resources
+	if len(t.AllocatedResource) == 0 && len(fatherResources) > 0 {
+		ans[0].AllocatedResource = fatherResources
+	}
+
 	for _, st := range t.Tasks {
-		ans = append(ans, st.GetAllTasksAndSubTasksList(fullName)...)
+		ans = append(ans, st.GetAllTasksAndSubTasksList(fullName, ans[0].AllocatedResource)...)
 	}
 
 	return ans
@@ -103,6 +113,25 @@ func (t *Task) GetTaskByFullName(fullname string) (*Task, error) {
 
 func (t *Task) GetSubTasks() *[]Task {
 	return &t.Tasks
+}
+
+func (t *Task) HasFlag(flag string) bool {
+	for _, f := range t.Flags {
+		if f == flag {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *Task) HasLabelKey(key string) bool {
+	for k, _ := range t.Labels {
+		if k == key {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *Task) Validate(ignoreError bool) error {

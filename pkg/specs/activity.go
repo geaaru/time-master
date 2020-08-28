@@ -101,9 +101,18 @@ func (a *Activity) GetAllTasksList() []Task {
 
 	if len(a.Tasks) > 0 {
 		for _, t := range a.Tasks {
-			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name)...)
+			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name, []string{})...)
 		}
 	}
 
 	return ans
+}
+
+func (a *Activity) HasLabelKey(key string) bool {
+	for k, _ := range a.Labels {
+		if k == key {
+			return true
+		}
+	}
+	return false
 }
