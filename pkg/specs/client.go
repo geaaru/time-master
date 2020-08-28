@@ -54,3 +54,7 @@ func (c *Client) GetActivityByName(name string) (*Activity, error) {
 
 	return nil, errors.New("Activity " + name + " not present")
 }
+
+func (c *Client) GetName() string {
+	return c.Name
+}
