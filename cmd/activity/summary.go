@@ -64,6 +64,13 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				fmt.Println("Too many arguments")
 				os.Exit(1)
 			}
+
+			onlyClosed, _ := cmd.Flags().GetBool("only-closed")
+			closed, _ := cmd.Flags().GetBool("closed")
+			if onlyClosed && closed {
+				fmt.Println("Both option --closed and --only-closed not admitted.")
+				os.Exit(1)
+			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
@@ -161,7 +168,12 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						fmt.Println(err.Error())
 						os.Exit(1)
 					}
-					duration, err = time.Seconds2Duration(effort)
+
+					if effort > 0 {
+						duration, err = time.Seconds2Duration(effort)
+					} else {
+						duration = ""
+					}
 
 					// Retrieve work time
 					work, workSecs, err := retrieveWorkTimeByActivity(tm, activity.Name)
@@ -173,6 +185,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					perc := ""
 					if workSecs > 0 {
 						perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
+					} else {
+						work = ""
 					}
 
 					table.Append([]string{
