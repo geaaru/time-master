@@ -30,13 +30,13 @@ import (
 	tmtime "github.com/geaaru/time-master/pkg/time"
 )
 
-func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearch, from, to string, users []string, tasks []string) (*[]specs.ResourceTsAggregated, error) {
+func (i *TimeMasterInstance) GetAggregatedTimesheetsMap(opts specs.TimesheetResearch, from, to string, users []string, tasks []string) (map[string]*specs.ResourceTsAggregated, error) {
+
 	var rta *specs.ResourceTsAggregated
 	var fromDate, toDate time.Time
 	var err error
 
 	tsMap := make(map[string]*specs.ResourceTsAggregated)
-	ans := []specs.ResourceTsAggregated{}
 
 	if from != "" {
 		fromDate, err = tmtime.ParseTimestamp(from, true)
@@ -105,6 +105,21 @@ func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearc
 			tsMap[key] = rta
 		}
 
+	}
+
+	for _, v := range tsMap {
+		v.CalculateDuration()
+	}
+
+	return tsMap, nil
+}
+
+func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearch, from, to string, users []string, tasks []string) (*[]specs.ResourceTsAggregated, error) {
+	ans := []specs.ResourceTsAggregated{}
+
+	tsMap, err := i.GetAggregatedTimesheetsMap(opts, from, to, users, tasks)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, v := range tsMap {
