@@ -120,6 +120,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					os.Exit(1)
 				}
 
+				nActivity = 1
+
 				effort, err := activity.GetPlannedEffortTotSecs(config.GetWork().WorkHours)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -209,7 +211,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			durationWork, err := time.Seconds2Duration(totWork)
 
 			if nActivity == 0 {
-				fmt.Sprintf("No activities found")
+				fmt.Println("No activities found")
 			} else {
 				table.SetFooter([]string{
 					fmt.Sprintf("Total (%d)", nActivity),
