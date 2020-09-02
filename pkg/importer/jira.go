@@ -39,11 +39,13 @@ type TmJiraImporter struct {
 	*DefaultImporter
 	ResourceMapping map[string]string
 	IssueTaskMap    map[string]string
+	IgnoredIssueMap map[string]bool
 }
 
 type TmJiraMapper struct {
-	Resources []TmJiraResource `json:"resources" yaml:"resources"`
-	Issues    []TmJiraIssue    `json:"issues" yaml:"issues"`
+	Resources     []TmJiraResource `json:"resources" yaml:"resources"`
+	Issues        []TmJiraIssue    `json:"issues" yaml:"issues"`
+	IgnoredIssues []string         `json:"ignored_issues,omitempty" yaml:"ignored_issues,omitempty"`
 }
 
 type TmJiraIssue struct {
@@ -77,6 +79,7 @@ func NewTmJiraImporter(config *specs.TimeMasterConfig, tmDir, filePrefix string,
 		DefaultImporter: NewDefaultImporter(config, tmDir, filePrefix, opts),
 		ResourceMapping: make(map[string]string, 0),
 		IssueTaskMap:    make(map[string]string, 0),
+		IgnoredIssueMap: make(map[string]bool, 0),
 	}
 }
 
@@ -90,6 +93,12 @@ func (i *TmJiraImporter) ImportMapper(mapper *TmJiraMapper) {
 	if len(mapper.Issues) > 0 {
 		for _, issue := range mapper.Issues {
 			i.IssueTaskMap[issue.JiraIssue] = issue.TaskName
+		}
+	}
+
+	if len(mapper.IgnoredIssues) > 0 {
+		for _, issue := range mapper.IgnoredIssues {
+			i.IgnoredIssueMap[issue] = true
 		}
 	}
 }
@@ -146,6 +155,11 @@ func (i *TmJiraImporter) convertRows2Agenda(rows *[]TmJiraCsvRow) error {
 
 		for _, row := range *rows {
 
+			if i.IsIssue2Ignore(row.Issue) {
+				i.Logger.Debug("Ignoring issue " + row.Issue)
+				continue
+			}
+
 			if userAgenda, ok := mAgenda[row.User]; ok {
 				// POST: the user's agenda is been already created.
 				rt := i.convertRow2ResourceTimesheet(&row)
@@ -181,6 +195,13 @@ func (i *TmJiraImporter) convertRows2Agenda(rows *[]TmJiraCsvRow) error {
 	}
 
 	return nil
+}
+
+func (i *TmJiraImporter) IsIssue2Ignore(issue string) bool {
+	if ok := i.IgnoredIssueMap[issue]; ok {
+		return true
+	}
+	return false
 }
 
 func (i *TmJiraImporter) GetMappedUser(user string) (ans string) {
