@@ -34,3 +34,7 @@ func ScenarioFromYaml(data []byte, file string) (*Scenario, error) {
 
 	return ans, nil
 }
+
+func (s *Scenario) SetNow(n string) {
+	s.NowTime = n
+}
