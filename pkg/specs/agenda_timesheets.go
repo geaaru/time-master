@@ -42,3 +42,19 @@ func (a *AgendaTimesheets) AddResourceTimesheet(rt *ResourceTimesheet) {
 func (a *AgendaTimesheets) GetTimesheets() *[]ResourceTimesheet {
 	return &a.Timesheets
 }
+
+func (a *AgendaTimesheets) GetLastDateSecs(onlyDate bool) (int64, error) {
+	ans := int64(0)
+	for _, t := range a.Timesheets {
+		date, err := t.GetDateUnix(onlyDate)
+		if err != nil {
+			return 0, err
+		}
+
+		if date > ans {
+			ans = date
+		}
+	}
+
+	return ans, nil
+}
