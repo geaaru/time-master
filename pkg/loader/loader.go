@@ -113,20 +113,21 @@ func (i *TimeMasterInstance) LoadScenarioDir(dir string) error {
 
 		content, err := ioutil.ReadFile(path.Join(dir, file.Name()))
 		if err != nil {
-			i.Logger.Debug("On read file", file.Name(), ":", err.Error())
+			i.Logger.Warning("On read file", file.Name(), ":", err.Error())
 			i.Logger.Debug("File", file.Name(), "skipped.")
 			continue
 		}
 
 		scenario, err := specs.ScenarioFromYaml(content, path.Join(dir, file.Name()))
 		if err != nil {
-			i.Logger.Debug("On parse file", file.Name(), ":", err.Error())
+			i.Logger.Warning("On parse file", file.Name(), ":", err.Error())
 			i.Logger.Debug("File", file.Name(), "skipped.")
 			continue
 		}
 
 		i.AddScenario(scenario)
 
+		i.Logger.Debug("Loaded scenario", scenario.Name, ".")
 	}
 
 	return nil
