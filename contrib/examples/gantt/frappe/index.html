@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Time Master Gantt</title>
+	<style>
+		body {
+			font-family: sans-serif;
+		}
+		.container {
+			width: 80%;
+			margin: 0 auto;
+		}
+
+.bar-milestone .bar {
+	fill: #fff;
+}
+.bar-milestone .bar-progress {
+	fill: #ff0;
+}
+.bar-milestone .bar-label {
+	fill: #f0f;
+}
+		/* custom class */
+		.gantt .bar-milestone .bar {
+			fill: tomato;
+		}
+	</style>
+	<link rel="stylesheet" href="dist/frappe-gantt.css" />
+	<script src="dist/frappe-gantt.js"></script>
+</head>
+<body>
+	<div class="container">
+		<h2>Time Master Gantt</h2>
+		<div class="gantt-target"></div>
+	</div>
+	<script>
+function stopEvent(event) {
+	event.preventDefault();
+	event.stopPropagation();
+}
+function draw() {
+    draw_bar();
+    
+    if (gt.config.bar.progress)
+        draw_progress_bar();
+    draw_label();
+               
+    if (gt.config.bar.resizing)
+         draw_resize_handles();
+}
+      var path = window.location.pathname;
+      var origin = window.location.origin;
+
+            spaths = path.split("/");
+            var url = "";
+            if (spaths.length > 0) {
+              for (var i = 0; i < (spaths.length - 1); i++) {
+                      if (spaths[i] !== "") url += "/" + spaths[i];
+              }
+              url = origin + url;
+            } else {
+              url = origin + path;
+            }
+
+      fetch(url + "/tasks.json").then(async (resp) => {
+        const tasks = await resp.json();
+        var gantt_chart = new Gantt(".gantt-target", tasks, {
+          date_format: 'YYYY-MM-DD',
+          view_mode: 'Month',
+          language: 'en',
+          step: 1,
+
+        });
+        //console.log(gantt_chart);
+
+      })
+	</script>
+</body>
+</html>
