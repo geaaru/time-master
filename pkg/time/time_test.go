@@ -68,6 +68,13 @@ var _ = Describe("Time Test", func() {
 			Expect(err).Should(BeNil())
 			Expect(sec).To(Equal(int64(60 * 60 * 1)))
 		})
+
+		It("Convert 3600s", func() {
+			sec, err := ParseDuration("86400s", 8)
+
+			Expect(err).Should(BeNil())
+			Expect(sec).To(Equal(int64(60 * 60 * 24)))
+		})
 	})
 
 	Context("Seconds converter", func() {
@@ -137,6 +144,33 @@ var _ = Describe("Time Test", func() {
 			Expect(t.Hour()).To(Equal(0))
 			Expect(t.Minute()).To(Equal(0))
 			Expect(t.Second()).To(Equal(0))
+		})
+	})
+
+	Context("Next Work Day", func() {
+
+		It("Parse1", func() {
+			d1, err := GetNextWorkDay("2020-09-03")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-04"))
+		})
+
+		It("Parse2 - Friday", func() {
+			d1, err := GetNextWorkDay("2020-09-04")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+
+		It("Parse3 - Saturday", func() {
+			d1, err := GetNextWorkDay("2020-09-05")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+
+		It("Parse4 - Sunday", func() {
+			d1, err := GetNextWorkDay("2020-09-06")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
 		})
 	})
 })

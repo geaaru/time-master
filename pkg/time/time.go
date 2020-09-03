@@ -28,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	date "github.com/rickb777/date"
 )
 
 // Parse duration and return number of seconds
@@ -102,6 +104,24 @@ func Seconds2Duration(sec int64) (string, error) {
 	return ans, nil
 }
 
+func Seconds2Date(sec int64, onlyDate bool) (string, error) {
+	ans := ""
+
+	if sec <= 0 {
+		return ans, errors.New("Seconds must be greather then 0")
+	}
+
+	m := time.Unix(sec, int64(0))
+
+	if onlyDate {
+		ans = m.Format("2006-01-02")
+	} else {
+		ans = m.Format("2006-01-02 15:04:05")
+	}
+
+	return ans, nil
+}
+
 func ParseTimestamp(t string, onlyDate bool) (time.Time, error) {
 	var layout string
 
@@ -115,4 +135,24 @@ func ParseTimestamp(t string, onlyDate bool) (time.Time, error) {
 	}
 
 	return time.Parse(layout, t)
+}
+
+func GetNextWorkDay(dstr string) (string, error) {
+	d, err := date.ParseISO(dstr)
+	if err != nil {
+		return "", err
+	}
+
+	var nextDay date.Date
+	switch d.Weekday() {
+	case time.Friday:
+		nextDay = d.AddDate(0, 0, 3)
+	case time.Saturday:
+		nextDay = d.AddDate(0, 0, 2)
+	default:
+		nextDay = d.AddDate(0, 0, 1)
+	}
+
+	return fmt.Sprintf("%d-%02d-%02d",
+		nextDay.Year(), nextDay.Month(), nextDay.Day()), nil
 }
