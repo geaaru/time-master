@@ -58,6 +58,24 @@ func (t *Task) GetEffort() string {
 	return t.Effort
 }
 
+func (t *Task) GetEffortSeconds(workHours int) (int64, error) {
+	var ans int64 = 0
+	var err error
+
+	if t.Effort != "" {
+		ans, err = time.ParseDuration(t.Effort, workHours)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	return ans, err
+}
+
+func (t *Task) IsCompleted() bool {
+	return t.Completed
+}
+
 func (t *Task) GetAllTasksAndSubTasksList(fatherName string, fatherResources []string) []Task {
 	var fullName string
 	ans := []Task{*t}
