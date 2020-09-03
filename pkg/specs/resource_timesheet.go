@@ -28,6 +28,17 @@ import (
 	"github.com/geaaru/time-master/pkg/time"
 )
 
+func NewResourceTimesheet(user, startDate, task, duration string) *ResourceTimesheet {
+	return &ResourceTimesheet{
+		Period: &Period{
+			StartPeriod: startDate,
+		},
+		User:     user,
+		Task:     task,
+		Duration: duration,
+	}
+}
+
 func (rt *ResourceTimesheet) GetDate(onlyDate bool) (string, error) {
 	date, err := time.ParseTimestamp(rt.Period.StartPeriod, onlyDate)
 	if err != nil {
@@ -84,6 +95,10 @@ func (rt *ResourceTimesheet) GetMapKey(opts TimesheetResearch, onlyDate bool) (s
 	}
 
 	return ans, nil
+}
+
+func (rt *ResourceTimesheet) GetSeconds(workHours int) (int64, error) {
+	return time.ParseDuration(rt.Duration, workHours)
 }
 
 func NewResourceTsAggregated(date, user, task string) *ResourceTsAggregated {
