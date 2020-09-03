@@ -72,7 +72,8 @@ type TimeMasterConfigLogging struct {
 
 type TimeMasterConfigWork struct {
 	// Default number of hours for day
-	WorkHours int `mapstructure:"work_hours,omitempty" json:"work_hours,omitempty" yaml:"work_hours,omitempty"`
+	WorkHours           int `mapstructure:"work_hours,omitempty" json:"work_hours,omitempty" yaml:"work_hours,omitempty"`
+	TaskDefaultPriority int `mapstructure:"task_default_priority,omitempty" json:"task_default_priority,omitempty" yaml:"task_default_priority,omitempty"`
 }
 
 func NewTimeMasterConfig(viper *v.Viper) *TimeMasterConfig {
@@ -135,6 +136,7 @@ func GenDefault(viper *v.Viper) {
 	viper.SetDefault("general.debug", false)
 
 	viper.SetDefault("work.work_hours", 8)
+	viper.SetDefault("work.task_default_priority", 100)
 
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.enable_logfile", false)
