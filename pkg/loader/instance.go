@@ -25,6 +25,7 @@ import (
 	"errors"
 
 	log "github.com/geaaru/time-master/pkg/logger"
+	scheduler "github.com/geaaru/time-master/pkg/scheduler"
 	specs "github.com/geaaru/time-master/pkg/specs"
 )
 
@@ -107,4 +108,35 @@ func (i *TimeMasterInstance) GetClientByName(name string) (*specs.Client, error)
 		}
 	}
 	return nil, errors.New("Client " + name + " not present")
+}
+
+func (i *TimeMasterInstance) GetScenarioByName(name string) (*specs.Scenario, error) {
+	for idx, s := range i.Scenarios {
+		if s.Name == name {
+			return &i.Scenarios[idx], nil
+		}
+	}
+	return nil, errors.New("Scenario " + name + " not present")
+}
+
+func (i *TimeMasterInstance) InitScheduler(sched scheduler.TimeMasterScheduler) {
+	sched.SetClients(i.GetClients())
+	sched.SetResources(i.GetResources())
+	sched.SetTimesheets(i.GetTimesheets())
+}
+
+func (i *TimeMasterInstance) GetAllTaskMap() map[string]specs.Task {
+	ans := make(map[string]specs.Task, 0)
+
+	// Retrieve the list of all tasks
+	for _, client := range i.Clients {
+		for _, activity := range *client.GetActivities() {
+			aTasks := activity.GetAllTasksList()
+			for _, t := range aTasks {
+				ans[t.Name] = t
+			}
+		}
+	}
+
+	return ans
 }

@@ -39,7 +39,32 @@ type Scenario struct {
 	ResourceCosts []ResourceCost `json:"resources_cost,omitempty" yaml:"resources_cost,omitempty"`
 	Rates         []ResourceRate `json:"rates,omitempty" yaml:"rates,omitempty"`
 
-	NowTime string `json:"now" yaml:"name"`
+	NowTime string `json:"now,omitempty" yaml:"now,omitempty"`
+
+	Scheduler string `json:"scheduler,omitempty" yaml:"scheduler,omitempty"`
+
+	// For scheduler simple
+	Tasks      []ScenarioTask     `json:"task_prorities,omitempty" yaml:"task_prorities,omitempty"`
+	Activities []ScenarioActivity `json:"activities_priorities,omitempty" yaml:"activities_priorities,omitempty"`
+}
+
+type ScenarioTask struct {
+	Name     string `json:"name" yaml:"name"`
+	Priority int    `json:"priority" yaml:"priority"`
+
+	OverrideResource []string `json:"override_resources,omitempty" yaml:"override_resources,omitempty"`
+}
+
+type ScenarioActivity struct {
+	Name     string `json:"name" yaml:"name"`
+	Priority int    `json:"priority" yaml:"priority"`
+}
+
+type ScenarioSchedule struct {
+	*Scenario
+	File string `json:"-" yaml:"-"`
+
+	Schedule []TaskScheduled `json:schedule,omitempty yaml:"schedule,omitempty`
 }
 
 type Activity struct {
@@ -50,6 +75,8 @@ type Activity struct {
 	File        string `json:"-" yaml:"-"`
 	Disabled    bool   `json:"disabled,omitempty" yaml:"disabled,omitempty"`
 	Closed      bool   `json:"closed,omitempty" yaml:"closed,omitempty"`
+
+	Offer int64 `json:"offer,omitempty" yaml:"offer,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
@@ -62,8 +89,9 @@ type Task struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
-	Priority    int    `json:"priority" yaml:"priority"`
-	Effort      string `json:"effort" yaml:"effort"`
+	Priority    int    `json:"priority,omitempty" yaml:"priority,omitempty"`
+	Effort      string `json:"effort,omitempty" yaml:"effort,omitempty"`
+	Completed   bool   `json:"completed,omitempty" yaml:"completed,omitempty"`
 
 	AllocatedResource []string `json:"resources,omitempty" yaml:"resources,omitempty"`
 
@@ -91,6 +119,9 @@ type Resource struct {
 type Period struct {
 	StartPeriod string `json:"start_period" yaml:"start_period"`
 	EndPeriod   string `json:"end_period,omitempty" yaml:"end_period,omitempty"`
+
+	StartTime int64 `json:"-" yaml:"-"`
+	EndTime   int64 `json:"-" yaml:"-"`
 }
 
 type ResourceRate struct {
@@ -163,4 +194,21 @@ type TaskResearch struct {
 	ActivityLabels     []string
 	Tasks              []string
 	Clients            []string
+}
+
+type TaskScheduled struct {
+	*Task
+	*Period
+
+	// We don't need this on yaml because could be stored with clients
+	Activity *Activity `json:"-" yaml:"-"`
+	Client   *Client   `json:"client" yaml:"client"`
+
+	Progress float64 `json:"progress,omitempty" yaml:"progress,omitempty"`
+	WorkTime int64   `json:"work_time,omitempty" yaml:"work_time,omitempty"`
+	LeftTime int64   `json:"-" yaml:"-"`
+
+	Underestimated bool `json:"understimated,omitempty" yaml:"understimated,omitempty"`
+
+	Timesheets []ResourceTimesheet `json:"timesheets,omitempty" yaml:"timesheets,omitempty"`
 }
