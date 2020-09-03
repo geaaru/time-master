@@ -183,6 +183,13 @@ github.com/otiai10/copy
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/rickb777/date v1.13.0
+## explicit
+github.com/rickb777/date
+github.com/rickb777/date/gregorian
+github.com/rickb777/date/period
+# github.com/rickb777/plural v1.2.1
+github.com/rickb777/plural
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/sirupsen/logrus v1.4.2

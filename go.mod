@@ -14,6 +14,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
+	github.com/rickb777/date v1.13.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
 	go.uber.org/zap v1.15.0
