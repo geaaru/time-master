@@ -42,6 +42,10 @@ func (a *Activity) IsClosed() bool {
 	return a.Closed
 }
 
+func (a *Activity) GetOffer() int64 {
+	return a.Offer
+}
+
 func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64
 
@@ -102,6 +106,13 @@ func (a *Activity) GetAllTasksList() []Task {
 	if len(a.Tasks) > 0 {
 		for _, t := range a.Tasks {
 			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name, []string{})...)
+		}
+	}
+
+	// Ensure that task are all completed for closed activity
+	if a.Closed {
+		for idx, _ := range ans {
+			ans[idx].Completed = true
 		}
 	}
 
