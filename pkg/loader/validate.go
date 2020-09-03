@@ -125,5 +125,40 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 		}
 	}
 
+	// Check depends of all tasks and resources allocations
+	for _, c := range i.Clients {
+		for _, a := range *c.GetActivities() {
+			for _, t := range a.GetAllTasksList() {
+				if len(t.Depends) > 0 {
+					for _, depend := range t.Depends {
+						if ok := tasksMap[depend]; !ok {
+							errMsg := fmt.Sprintf("Invalid dependency %s for task %s",
+								depend, t.Name)
+							if !ignoreError {
+								return errors.New(errMsg)
+							}
+
+							i.Logger.Warning(errMsg)
+						}
+					}
+				}
+
+				for _, t := range *a.GetTasks() {
+
+					if len(t.AllocatedResource) == 0 && t.Milestone == "" {
+
+						errMsg := fmt.Sprintf("No resources defined on task %s.%s",
+							a.Name, t.Name)
+						if !ignoreError {
+							return errors.New(errMsg)
+						}
+
+						i.Logger.Warning(errMsg)
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
