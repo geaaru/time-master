@@ -34,6 +34,10 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 	dupTasks := 0
 	clientsMap := make(map[string]bool, 0)
 
+	activitiesMap := make(map[string]bool, 0)
+	// Check tasks
+	tasksMap := make(map[string]bool, 0)
+
 	// Check for task or activities with dot on name
 	for _, c := range i.Clients {
 
@@ -46,8 +50,6 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 		} else {
 			clientsMap[c.Name] = true
 		}
-
-		activitiesMap := make(map[string]bool, 0)
 
 		for _, a := range *c.GetActivities() {
 
@@ -70,9 +72,6 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 					return errors.New("Invalid name on activity " + a.Name)
 				}
 			}
-
-			// Check tasks
-			tasksMap := make(map[string]bool, 0)
 
 			// Check name task
 			for _, t := range *a.GetTasks() {
@@ -100,6 +99,27 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 					tasksMap[t.Name] = true
 				}
 
+			}
+
+		}
+	}
+
+	// Check if timesheet are related to valid tasks
+	for _, agenda := range i.Timesheets {
+
+		for _, timesheet := range *agenda.GetTimesheets() {
+			if ok := tasksMap[timesheet.Task]; !ok {
+
+				errMsg := fmt.Sprintf("No task %s found for timesheet of user %s of period %s",
+					timesheet.Task,
+					timesheet.User,
+					timesheet.Period.StartPeriod,
+				)
+				if !ignoreError {
+					return errors.New(errMsg)
+				}
+
+				i.Logger.Warning(errMsg)
 			}
 
 		}
