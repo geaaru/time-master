@@ -137,7 +137,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				}
 
 				perc := ""
-				if workSecs > 0 {
+				if workSecs > 0 && effort > 0 {
 					perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
 				}
 
@@ -185,10 +185,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					}
 
 					perc := ""
-					if workSecs > 0 {
+					if workSecs > 0 && effort > 0 {
 						perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
-					} else {
-						work = ""
 					}
 
 					table.Append([]string{
