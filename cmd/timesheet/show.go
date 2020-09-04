@@ -61,6 +61,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			ignoreTime, _ := cmd.Flags().GetBool("ignore-time")
 			from, _ := cmd.Flags().GetString("from")
 			to, _ := cmd.Flags().GetString("to")
+			scenario, _ := cmd.Flags().GetString("scenario")
 
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
@@ -69,6 +70,18 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			if err != nil {
 				fmt.Println("Error on load data:" + err.Error() + "\n")
 				os.Exit(1)
+			}
+
+			if scenario != "" {
+				prevision, err := specs.ScenarioScheduleFromFile(scenario)
+				if err != nil {
+					fmt.Println("Error on load scenario file: " + err.Error())
+					os.Exit(1)
+				}
+
+				tm.SetAgendaTimesheets([]specs.AgendaTimesheets{
+					*prevision.GetAllResourceTimesheets(),
+				})
 			}
 
 			researchOpts := specs.TimesheetResearch{
@@ -184,6 +197,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.Bool("by-activities", false, "Timesheets aggregated for activities.")
 	flags.Bool("ignore-time", false,
 		"Timesheets aggregated without monthly/daily aggregation.")
+	flags.String("scenario", "", "Specify path of the scenario prevision to load.")
 	flags.String("from", "", "Specify from date in format YYYY-MM-DD.")
 	flags.String("to", "", "Specify to date in format YYYY-MM-DD.")
 	flags.StringSliceVarP(&tasks, "tasks", "t", []string{}, "Filter for tasks with regex string.")
