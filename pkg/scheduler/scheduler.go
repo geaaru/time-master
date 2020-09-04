@@ -45,6 +45,7 @@ type SchedulerOpts struct {
 	FilterPreElaboration bool
 	OnlyClosed           bool
 	SkipEmptyTasks       bool
+	SkipPlan             bool
 }
 
 type DefaultScheduler struct {

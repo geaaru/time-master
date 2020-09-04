@@ -51,6 +51,7 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			onlyClosed, _ := cmd.Flags().GetBool("only-closed")
 			skipEmptyTasks, _ := cmd.Flags().GetBool("skip-empty-tasks")
+			skipPlan, _ := cmd.Flags().GetBool("skip-plan")
 			withClientData, _ := cmd.Flags().GetBool("with-client-data")
 			preFilter, _ := cmd.Flags().GetBool("pre-filter")
 			now, _ := cmd.Flags().GetString("now")
@@ -94,6 +95,7 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				FilterPreElaboration: preFilter,
 				OnlyClosed:           onlyClosed,
 				SkipEmptyTasks:       skipEmptyTasks,
+				SkipPlan:             skipPlan,
 				ExcludeTaskFlags:     tasksFlags,
 			}
 
@@ -157,6 +159,7 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags := cmd.Flags()
 	flags.Bool("only-closed", false, "Show only tasks of closed activities.")
 	flags.Bool("skip-empty-tasks", false, "Skip tasks closed without effort.")
+	flags.Bool("skip-plan", false, "Avoid simulation and report only available timesheets.")
 	flags.Bool("with-client-data", false, "Write also client data on prevision file.")
 	flags.Bool("pre-filter", false, "Apply filter before build prevision.")
 	flags.StringP("file", "f", "", "Set the file where to write calculate prevision.")

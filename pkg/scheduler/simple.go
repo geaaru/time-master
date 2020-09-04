@@ -97,15 +97,18 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 	if err != nil {
 		return nil, err
 	}
-	err = s.doPrevision()
-	if err != nil {
-		return nil, err
-	}
 
-	// Elaborate task scheduled
-	err = s.elaborateTimesheets(true)
-	if err != nil {
-		return nil, err
+	if !opts.SkipPlan {
+		err = s.doPrevision()
+		if err != nil {
+			return nil, err
+		}
+
+		// Elaborate task scheduled
+		err = s.elaborateTimesheets(true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = s.FilterPostElaboration(opts)
