@@ -97,6 +97,10 @@ func (i *TimeMasterInstance) GetTimesheets() *[]specs.AgendaTimesheets {
 	return &i.Timesheets
 }
 
+func (i *TimeMasterInstance) SetAgendaTimesheets(tt []specs.AgendaTimesheets) {
+	i.Timesheets = tt
+}
+
 func (i *TimeMasterInstance) AddAgendaTimesheet(t *specs.AgendaTimesheets) {
 	i.Timesheets = append(i.Timesheets, *t)
 }
