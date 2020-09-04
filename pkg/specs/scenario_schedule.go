@@ -22,6 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -49,6 +50,35 @@ func (s *ScenarioSchedule) Write2File(f string) error {
 	}
 
 	return nil
+}
+
+func ScenarioScheduleFromFile(file string) (*ScenarioSchedule, error) {
+	fileAbs, err := filepath.Abs(file)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(fileAbs)
+	if err != nil {
+		return nil, err
+	}
+
+	return ScenarioScheduleFromYaml(content, file)
+}
+
+func (s *ScenarioSchedule) GetAllResourceTimesheets() *AgendaTimesheets {
+	ans := &AgendaTimesheets{
+		Name:       fmt.Sprintf("Agenda from scenario %s", s.Scenario.Name),
+		Timesheets: []ResourceTimesheet{},
+	}
+
+	for _, ts := range s.Schedule {
+		for _, rt := range ts.Timesheets {
+			ans.AddResourceTimesheet(&rt)
+		}
+	}
+
+	return ans
 }
 
 func ScenarioScheduleFromYaml(data []byte, file string) (*ScenarioSchedule, error) {

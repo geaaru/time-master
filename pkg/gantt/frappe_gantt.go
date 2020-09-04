@@ -41,9 +41,11 @@ type FrappeGanttTask struct {
 	Dependencies string  `json:"dependencies,omitempty"`
 	CustomClass  string  `json:"custom_class,omitempty"`
 	StartTime    int64   `json:"-"`
+	EndTime      int64   `json:"-"`
 }
 
 type FGTaskSorter []FrappeGanttTask
+type FGTaskEndDateSorter []FrappeGanttTask
 
 type FrappeGanttProducer struct {
 	*DefaultGanttProducer
@@ -55,7 +57,7 @@ func NewFrappeGanttProducer(config *specs.TimeMasterConfig) *FrappeGanttProducer
 	}
 }
 
-func (f *FrappeGanttProducer) Build(s *specs.ScenarioSchedule) ([]byte, error) {
+func (f *FrappeGanttProducer) Build(s *specs.ScenarioSchedule, opts ProducerOpts) ([]byte, error) {
 	tasks := []FrappeGanttTask{}
 	ans := []byte{}
 
@@ -66,17 +68,28 @@ func (f *FrappeGanttProducer) Build(s *specs.ScenarioSchedule) ([]byte, error) {
 			return ans, err
 		}
 
+		endTime, err := time.ParseTimestamp(ts.Period.EndPeriod, true)
+		if err != nil {
+			return ans, err
+		}
 		ft := FrappeGanttTask{
 			Id:        ts.Name,
-			Name:      ts.Description,
 			Start:     ts.Period.StartPeriod,
 			End:       ts.Period.EndPeriod,
 			StartTime: startTime.Unix(),
+			EndTime:   endTime.Unix(),
+		}
+
+		words := strings.Split(ts.Name, ".")
+
+		if opts.ShowActivityOnTasks {
+			ft.Name = words[0] + " - " + ts.Description
+		} else {
+			ft.Name = ts.Description
 		}
 
 		if ts.Task.Milestone != "" {
 			ft.CustomClass = "bar-milestone"
-			words := strings.Split(ts.Name, ".")
 			ft.Name = words[0] + " - " + ts.Description
 		} else {
 			ft.Progress = ts.Progress
@@ -93,7 +106,11 @@ func (f *FrappeGanttProducer) Build(s *specs.ScenarioSchedule) ([]byte, error) {
 		tasks = append(tasks, ft)
 	}
 
-	sort.Sort(FGTaskSorter(tasks))
+	if opts.OrderByEndTime {
+		sort.Sort(FGTaskEndDateSorter(tasks))
+	} else {
+		sort.Sort(FGTaskSorter(tasks))
+	}
 
 	return json.Marshal(tasks)
 }
@@ -105,4 +122,13 @@ func (t FGTaskSorter) Less(i, j int) bool {
 		return t[i].CustomClass != ""
 	}
 	return t[i].StartTime < t[j].StartTime
+}
+
+func (t FGTaskEndDateSorter) Len() int      { return len(t) }
+func (t FGTaskEndDateSorter) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t FGTaskEndDateSorter) Less(i, j int) bool {
+	if t[i].EndTime == t[j].EndTime {
+		return t[i].CustomClass != ""
+	}
+	return t[i].EndTime < t[j].EndTime
 }

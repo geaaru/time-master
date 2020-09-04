@@ -29,12 +29,17 @@ import (
 )
 
 type TimeMasterGanttProducer interface {
-	Build(*specs.ScenarioSchedule) ([]byte, error)
+	Build(*specs.ScenarioSchedule, ProducerOpts) ([]byte, error)
 }
 
 type DefaultGanttProducer struct {
 	Logger *log.TmLogger
 	Config *specs.TimeMasterConfig
+}
+
+type ProducerOpts struct {
+	ShowActivityOnTasks bool
+	OrderByEndTime      bool
 }
 
 func NewProducer(config *specs.TimeMasterConfig, t string) (TimeMasterGanttProducer, error) {

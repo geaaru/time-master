@@ -25,27 +25,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	gantt "github.com/geaaru/time-master/pkg/gantt"
 	specs "github.com/geaaru/time-master/pkg/specs"
 
 	"github.com/spf13/cobra"
 )
-
-func loadPrevisionFile(file string) (*specs.ScenarioSchedule, error) {
-	fileAbs, err := filepath.Abs(file)
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := ioutil.ReadFile(fileAbs)
-	if err != nil {
-		return nil, err
-	}
-
-	return specs.ScenarioScheduleFromYaml(content, file)
-}
 
 func newGanttCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var cmd = &cobra.Command{
@@ -62,9 +47,12 @@ func newGanttCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			pFile, _ := cmd.Flags().GetString("prevision")
+			toFile, _ := cmd.Flags().GetString("to")
 			stdOut, _ := cmd.Flags().GetBool("stdout")
+			byEndTime, _ := cmd.Flags().GetBool("by-endtime")
+			showActivity, _ := cmd.Flags().GetBool("show-activity")
 
-			prevision, err := loadPrevisionFile(pFile)
+			prevision, err := specs.ScenarioScheduleFromFile(pFile)
 			if err != nil {
 				fmt.Println("Error on load prevision file: " + err.Error())
 				os.Exit(1)
@@ -76,10 +64,23 @@ func newGanttCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				os.Exit(1)
 			}
 
-			data, err := producer.Build(prevision)
+			opts := gantt.ProducerOpts{
+				ShowActivityOnTasks: showActivity,
+				OrderByEndTime:      byEndTime,
+			}
+
+			data, err := producer.Build(prevision, opts)
 			if err != nil {
 				fmt.Println("Error on produce data: " + err.Error())
 				os.Exit(1)
+			}
+
+			if toFile != "" {
+				err := ioutil.WriteFile(toFile, data, 0644)
+				if err != nil {
+					fmt.Println("Error on write data on file: " + err.Error())
+					os.Exit(1)
+				}
 			}
 
 			if stdOut {
@@ -91,7 +92,11 @@ func newGanttCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.String("prevision", "", "Path of the file with the scenario prevision.")
+	flags.String("to", "", "Path of the file where write gantt data.")
 	flags.BoolP("stdout", "o", false, "Write to stdout.")
+	flags.Bool("show-activity", false,
+		"Add activity name as prefix of task description")
+	flags.Bool("by-endtime", false, "Order tasks by end time instead of start time.")
 
 	return cmd
 }
