@@ -173,4 +173,53 @@ var _ = Describe("Time Test", func() {
 			Expect(d1).To(Equal("2020-09-07"))
 		})
 	})
+
+	Context("Next Week Work Day", func() {
+
+		It("Parse1 - Thursday", func() {
+			d1, err := GetNextWeekFirstWorkDay("2020-09-03")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+
+		It("Parse2 - Friday", func() {
+			d1, err := GetNextWeekFirstWorkDay("2020-09-04")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+
+		It("Parse3 - Saturday", func() {
+			d1, err := GetNextWeekFirstWorkDay("2020-09-05")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+
+		It("Parse4 - Sunday", func() {
+			d1, err := GetNextWeekFirstWorkDay("2020-09-06")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-09-07"))
+		})
+	})
+
+	Context("Next Month Work Day", func() {
+
+		It("Parse1 ", func() {
+			d1, err := GetNextMonthFirstWorkDay("2020-09-03")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-10-01"))
+		})
+
+		It("Parse2 ", func() {
+			d1, err := GetNextMonthFirstWorkDay("2020-10-01")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-11-02"))
+		})
+
+		It("Parse3 ", func() {
+			d1, err := GetNextMonthFirstWorkDay("2020-07-06")
+			Expect(err).Should(BeNil())
+			Expect(d1).To(Equal("2020-08-03"))
+		})
+
+	})
 })

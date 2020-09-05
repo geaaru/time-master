@@ -138,12 +138,13 @@ func ParseTimestamp(t string, onlyDate bool) (time.Time, error) {
 }
 
 func GetNextWorkDay(dstr string) (string, error) {
+	var nextDay date.Date
+
 	d, err := date.ParseISO(dstr)
 	if err != nil {
 		return "", err
 	}
 
-	var nextDay date.Date
 	switch d.Weekday() {
 	case time.Friday:
 		nextDay = d.AddDate(0, 0, 3)
@@ -151,6 +152,52 @@ func GetNextWorkDay(dstr string) (string, error) {
 		nextDay = d.AddDate(0, 0, 2)
 	default:
 		nextDay = d.AddDate(0, 0, 1)
+	}
+
+	return fmt.Sprintf("%d-%02d-%02d",
+		nextDay.Year(), nextDay.Month(), nextDay.Day()), nil
+}
+
+func GetNextWeekFirstWorkDay(dstr string) (string, error) {
+	var nextDay date.Date
+
+	d, err := date.ParseISO(dstr)
+	if err != nil {
+		return "", err
+	}
+
+	switch d.Weekday() {
+	case time.Sunday:
+		nextDay = d.AddDate(0, 0, 1)
+	default:
+		nextDay = d.AddDate(0, 0, 7-int(d.Weekday())+1)
+	}
+
+	return fmt.Sprintf("%d-%02d-%02d",
+		nextDay.Year(), nextDay.Month(), nextDay.Day()), nil
+}
+
+func GetNextMonthFirstWorkDay(dstr string) (string, error) {
+	var nextDay date.Date
+
+	d, err := date.ParseISO(dstr)
+	if err != nil {
+		return "", err
+	}
+
+	nextDay = d.AddDate(0, 1, 0)
+	// Set first of the month
+	nextDay, err = date.ParseISO(fmt.Sprintf("%d-%02d-%02d",
+		nextDay.Year(),
+		nextDay.Month(),
+		1,
+	))
+
+	switch nextDay.Weekday() {
+	case time.Sunday, time.Saturday:
+		return GetNextWorkDay(
+			fmt.Sprintf("%d-%02d-%02d",
+				nextDay.Year(), nextDay.Month(), nextDay.Day()))
 	}
 
 	return fmt.Sprintf("%d-%02d-%02d",
