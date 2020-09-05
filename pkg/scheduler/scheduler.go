@@ -49,13 +49,29 @@ type SchedulerOpts struct {
 }
 
 type DefaultScheduler struct {
-	Logger     *log.TmLogger
-	Config     *specs.TimeMasterConfig
-	Clients    []specs.Client
-	Resources  []specs.Resource
-	Timesheets []specs.AgendaTimesheets
-	Scenario   *specs.ScenarioSchedule
-	taskMap    map[string]*specs.TaskScheduled
+	Logger       *log.TmLogger
+	Config       *specs.TimeMasterConfig
+	Clients      []specs.Client
+	Resources    []specs.Resource
+	Timesheets   []specs.AgendaTimesheets
+	Scenario     *specs.ScenarioSchedule
+	taskMap      map[string]*specs.TaskScheduled
+	ResourcesMap map[string]*ResourceDailyMap
+}
+
+type ResourceDailyMap struct {
+	User string
+	// Map with the time left for a specific day
+	Days map[string]int64
+}
+
+func (s *DefaultScheduler) initResourceMap() {
+	for _, r := range s.Resources {
+		s.ResourcesMap[r.User] = &ResourceDailyMap{
+			User: r.User,
+			Days: make(map[string]int64, 0),
+		}
+	}
 }
 
 func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {

@@ -32,15 +32,8 @@ import (
 	time "github.com/geaaru/time-master/pkg/time"
 )
 
-type ResourceDailyMap struct {
-	User string
-	// Map with the time left for a specific day
-	Days map[string]int64
-}
-
 type SimpleScheduler struct {
 	*DefaultScheduler
-	ResourcesMap map[string]*ResourceDailyMap
 }
 
 func NewSimpleScheduler(config *specs.TimeMasterConfig, scenario *specs.Scenario) *SimpleScheduler {
@@ -52,9 +45,9 @@ func NewSimpleScheduler(config *specs.TimeMasterConfig, scenario *specs.Scenario
 				Scenario: scenario,
 				Schedule: []specs.TaskScheduled{},
 			},
-			taskMap: make(map[string]*specs.TaskScheduled, 0),
+			taskMap:      make(map[string]*specs.TaskScheduled, 0),
+			ResourcesMap: make(map[string]*ResourceDailyMap, 0),
 		},
-		ResourcesMap: make(map[string]*ResourceDailyMap, 0),
 	}
 
 	// Initialize logging
@@ -261,13 +254,4 @@ func (s *SimpleScheduler) doPrevision() error {
 	}
 
 	return nil
-}
-
-func (s *SimpleScheduler) initResourceMap() {
-	for _, r := range s.Resources {
-		s.ResourcesMap[r.User] = &ResourceDailyMap{
-			User: r.User,
-			Days: make(map[string]int64, 0),
-		}
-	}
 }
