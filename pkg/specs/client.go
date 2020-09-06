@@ -37,6 +37,16 @@ func ClientFromYaml(data []byte, file string) (*Client, error) {
 	return ans, nil
 }
 
+func NewClient(name string) *Client {
+	return &Client{
+		Name:           name,
+		Description:    "",
+		File:           "",
+		ActivitiesDirs: []string{},
+		Activities:     []Activity{},
+	}
+}
+
 func (c *Client) AddActivity(a Activity) {
 	c.Activities = append(c.Activities, a)
 }
