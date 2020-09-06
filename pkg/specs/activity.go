@@ -38,6 +38,24 @@ func ActivityFromYaml(data []byte, file string) (*Activity, error) {
 	return ans, nil
 }
 
+func NewActivity(name, description string) *Activity {
+	return &Activity{
+		Name:        name,
+		Description: description,
+		Note:        "",
+		Priority:    100,
+		Disabled:    false,
+		Closed:      false,
+		Labels:      make(map[string]string, 0),
+		Flags:       []string{},
+		Tasks:       []Task{},
+	}
+}
+
+func (a *Activity) AddTask(t *Task) {
+	a.Tasks = append(a.Tasks, *t)
+}
+
 func (a *Activity) IsClosed() bool {
 	return a.Closed
 }
