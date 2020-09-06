@@ -137,6 +137,20 @@ func ParseTimestamp(t string, onlyDate bool) (time.Time, error) {
 	return time.Parse(layout, t)
 }
 
+func IsAWorkDay(dstr string) (bool, error) {
+	d, err := date.ParseISO(dstr)
+	if err != nil {
+		return false, err
+	}
+
+	switch d.Weekday() {
+	case time.Saturday, time.Sunday:
+		return false, nil
+	default:
+		return true, nil
+	}
+}
+
 func GetNextWorkDay(dstr string) (string, error) {
 	var nextDay date.Date
 
