@@ -34,3 +34,15 @@ func ResourceFromYaml(data []byte, file string) (*Resource, error) {
 
 	return ans, nil
 }
+
+func NewResource(user, name string) *Resource {
+	return &Resource{
+		User:       user,
+		Name:       name,
+		Email:      []string{},
+		Phone:      []string{},
+		Holidays:   []ResourceHolidays{},
+		Sick:       []ResourceSick{},
+		Unemployed: []ResourceUnemployed{},
+	}
+}
