@@ -36,6 +36,13 @@ type TimeMasterScheduler interface {
 	SetClients(*[]specs.Client)
 	SetResources(*[]specs.Resource)
 	SetTimesheets(*[]specs.AgendaTimesheets)
+
+	// Internal methods
+	GetResourcesMap() *map[string]*ResourceDailyMap
+	GetTaskMap() *map[string]*specs.TaskScheduled
+	GetConfig() *specs.TimeMasterConfig
+	GetLogger() *log.TmLogger
+	Init() error
 }
 
 type SchedulerOpts struct {
@@ -65,6 +72,15 @@ type ResourceDailyMap struct {
 	Days map[string]int64
 }
 
+func (s *DefaultScheduler) GetConfig() *specs.TimeMasterConfig { return s.Config }
+func (s *DefaultScheduler) GetLogger() *log.TmLogger           { return s.Logger }
+
+func (s *DefaultScheduler) Init() error {
+	s.initResourceMap()
+	s.initializeTasks()
+	return nil
+}
+
 func (s *DefaultScheduler) initResourceMap() {
 	for _, r := range s.Resources {
 		s.ResourcesMap[r.User] = &ResourceDailyMap{
@@ -72,6 +88,14 @@ func (s *DefaultScheduler) initResourceMap() {
 			Days: make(map[string]int64, 0),
 		}
 	}
+}
+
+func (s *DefaultScheduler) GetResourcesMap() *map[string]*ResourceDailyMap {
+	return &s.ResourcesMap
+}
+
+func (s *DefaultScheduler) GetTaskMap() *map[string]*specs.TaskScheduled {
+	return &s.taskMap
 }
 
 func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {

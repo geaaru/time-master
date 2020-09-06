@@ -92,7 +92,7 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 	}
 
 	if !opts.SkipPlan {
-		err = s.doPrevision()
+		err = s.doPrevision(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -112,17 +112,24 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 	return s.Scenario, nil
 }
 
-func (s *SimpleScheduler) doPrevision() error {
+func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 	var err error
 
 	tasks := []specs.TaskScheduled{}
 	completedTasks := []specs.TaskScheduled{}
+	recursiveTasks := []specs.TaskScheduled{}
 
 	s.initResourceMap()
 
-	// Retrieve the list of not closed tasks with effort.
+	// Retrieve the list of not closed tasks with effort
+	// and recursive tasks
 	for idx, ts := range s.Scenario.Schedule {
 		if ts.Task.Completed || ts.Task.Effort == "" {
+			continue
+		}
+
+		if ts.Task.Recursive.Enable {
+			recursiveTasks = append(recursiveTasks, s.Scenario.Schedule[idx])
 			continue
 		}
 
@@ -154,6 +161,23 @@ func (s *SimpleScheduler) doPrevision() error {
 
 	// Sort task for priority
 	sort.Sort(specs.TaskSchedPrioritySorter(tasks))
+
+	if len(recursiveTasks) > 0 {
+		// Elaborate before others tasks the recursive tasks.
+
+		// Sort tasks for priority
+		sort.Sort(specs.TaskSchedPrioritySorter(recursiveTasks))
+
+		for idx, _ := range recursiveTasks {
+			seer := NewRecursiveTaskSeer(s, &recursiveTasks[idx])
+			err := seer.DoPrevision(s.Scenario.NowTime)
+			if err != nil {
+				return err
+			}
+
+			completedTasks = append(completedTasks, recursiveTasks[idx])
+		}
+	}
 
 	workDate := s.Scenario.NowTime
 	workDaySec, _ := time.ParseDuration("1d", s.Config.GetWork().WorkHours)

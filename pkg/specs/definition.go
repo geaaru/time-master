@@ -86,6 +86,8 @@ type Activity struct {
 
 // General task structure for files specs
 type Task struct {
+	*Period
+
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Note        string `json:"note,omitempty" yaml:"note,omitempty"`
@@ -102,6 +104,16 @@ type Task struct {
 
 	Tasks   []Task   `json:"subtasks,omitempty" yaml:"subtasks,omitempty"`
 	Depends []string `json:"depends,omitempty" yaml:"depends,omitempty"`
+
+	// Recursive options
+	Recursive TaskRecursiveOpts `json:"recursive,omitempty" yaml:"recursive,omitempty"`
+}
+
+type TaskRecursiveOpts struct {
+	Enable bool `json:"enable" yaml:"enable"`
+	// Type of recursion: weekly (default) | monthly | daily
+	Mode     string `json:"mode" yaml:"mode"`
+	Duration string `json:"duration" yaml:"duration"`
 }
 
 type Resource struct {

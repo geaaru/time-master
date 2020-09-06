@@ -29,6 +29,31 @@ import (
 	time "github.com/geaaru/time-master/pkg/time"
 )
 
+func NewTask(name, description, effort string, resources []string) *Task {
+
+	return &Task{
+		Period: &Period{
+			StartPeriod: "",
+			EndPeriod:   "",
+		},
+		Name:              name,
+		Description:       description,
+		Note:              "",
+		Priority:          100,
+		Effort:            effort,
+		Completed:         false,
+		AllocatedResource: resources,
+		Milestone:         "",
+		Flags:             []string{},
+		Labels:            make(map[string]string, 0),
+		Tasks:             []Task{},
+		Depends:           []string{},
+		Recursive: TaskRecursiveOpts{
+			Enable: false,
+		},
+	}
+}
+
 func (t *Task) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64
 	var err error
@@ -173,4 +198,20 @@ func (t *Task) Validate(ignoreError bool) error {
 	}
 
 	return nil
+}
+
+func (ts *TaskRecursiveOpts) GetMode() string     { return ts.Mode }
+func (ts *TaskRecursiveOpts) GetDuration() string { return ts.Duration }
+func (ts *TaskRecursiveOpts) GetSeconds(workHours int) (int64, error) {
+	var ans int64
+	var err error
+
+	if ts.Duration != "" {
+		ans, err = time.ParseDuration(ts.Duration, workHours)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return ans, err
 }
