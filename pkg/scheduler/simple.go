@@ -124,7 +124,7 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 	// Retrieve the list of not closed tasks with effort
 	// and recursive tasks
 	for idx, ts := range s.Scenario.Schedule {
-		if ts.Task.Completed || ts.Task.Effort == "" {
+		if ts.Task.Completed || (ts.Task.Effort == "" && !ts.Task.Recursive.Enable) {
 			continue
 		}
 
@@ -168,7 +168,10 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 		// Sort tasks for priority
 		sort.Sort(specs.TaskSchedPrioritySorter(recursiveTasks))
 
-		for idx, _ := range recursiveTasks {
+		for idx, t := range recursiveTasks {
+
+			s.Logger.Debug(fmt.Sprintf(
+				"[%s] Scheduling recursive task ...", t.Task.Name))
 			seer := NewRecursiveTaskSeer(s, &recursiveTasks[idx])
 			err := seer.DoPrevision(s.Scenario.NowTime)
 			if err != nil {
