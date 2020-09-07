@@ -150,15 +150,25 @@ func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {
 		}
 	}
 
+	if opts.SkipEmptyTasks {
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			if opts.SkipEmptyTasks && ts.Period.StartTime == 0 {
+				continue
+			}
+
+			tasks = append(tasks, s.Scenario.Schedule[idx])
+		}
+		s.Scenario.Schedule = tasks
+	}
+
 	if opts.OnlyClosed {
 		tasks := []specs.TaskScheduled{}
 
 		for idx, ts := range s.Scenario.Schedule {
 			if ts.Task.Completed {
-				if opts.SkipEmptyTasks && ts.Period.StartTime == 0 {
-					continue
-				}
-
 				tasks = append(tasks, s.Scenario.Schedule[idx])
 			}
 		}
@@ -337,6 +347,9 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 	// Create list of task without timesheets but closed
 	closedTasks := []*specs.TaskScheduled{}
 
+	// Register tasks with deps to second phase start/end caluclation
+	taskWithDeps := []*specs.TaskScheduled{}
+
 	mKeys := []string{}
 	for k, _ := range s.taskMap {
 		mKeys = append(mKeys, k)
@@ -364,12 +377,17 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 			continue
 		}
 
+		if len(st.Task.Depends) > 0 {
+			taskWithDeps = append(taskWithDeps, st)
+		}
+
 		if st.Task.Effort == "" {
 
-			if len(st.Task.Tasks) > 0 {
+			minTime := int64(0)
+			maxTime := int64(0)
 
-				minTime := int64(0)
-				maxTime := int64(0)
+			// Calculate start/end date through children tasks
+			if len(st.Task.Tasks) > 0 {
 
 				for _, task := range st.Task.Tasks {
 
@@ -410,7 +428,8 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 					}
 				}
 
-			}
+			} // end if len(st.Task.Tasks) > 0
+
 		}
 
 	}
@@ -464,6 +483,57 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 			}
 
 		}
+	}
+
+	// Update tasks with dependends
+	for _, st := range taskWithDeps {
+
+		minTime := st.Period.StartTime
+		maxTime := st.Period.EndTime
+
+		for _, task := range st.Task.Depends {
+
+			// Retrieve task scheduled of the childer
+			cst, ok := s.taskMap[task]
+			if !ok {
+				return errors.New(fmt.Sprintf(
+					"Error on retrieve task %s from map of the father %s.",
+					task, st.Task.Name))
+			}
+
+			if minTime == 0 || (cst.Period.StartTime < minTime && cst.Period.StartTime > 0) {
+				minTime = cst.Period.StartTime
+			}
+
+			if st.Task.Completed || (withPlan && st.LeftTime == 0) {
+				if maxTime == 0 || cst.Period.EndTime > maxTime {
+					maxTime = cst.Period.EndTime
+				}
+			}
+		}
+
+		st.Period.StartTime = minTime
+		st.Period.EndTime = maxTime
+
+		if minTime > 0 {
+			// TODO: handle onlyDate correctly
+			st.Period.StartPeriod, err = time.Seconds2Date(minTime, true)
+			if err != nil {
+				return err
+			}
+		}
+
+		if maxTime > 0 && (st.Task.Completed || withPlan && st.LeftTime == 0) {
+			st.Period.EndPeriod, err = time.Seconds2Date(maxTime, true)
+			if err != nil {
+				return err
+			}
+
+			s.Logger.Debug(fmt.Sprintf("Milestone %s completed from %s to %s.",
+				st.Task.Name, st.Period.StartPeriod, st.Period.EndPeriod))
+
+		}
+
 	}
 
 	// Fix milestone
