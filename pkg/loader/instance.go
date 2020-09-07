@@ -144,3 +144,16 @@ func (i *TimeMasterInstance) GetAllTaskMap() map[string]specs.Task {
 
 	return ans
 }
+
+func (i *TimeMasterInstance) GetActivityByName(aName string) (*specs.Activity, *specs.Client, error) {
+
+	for idx, _ := range i.Clients {
+		for idx_a, activity := range *i.Clients[idx].GetActivities() {
+			if activity.Name == aName {
+				return &(*i.Clients[idx].GetActivities())[idx_a], &i.Clients[idx], nil
+			}
+		}
+	}
+
+	return nil, nil, errors.New("No activity found with name " + aName)
+}

@@ -22,7 +22,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"errors"
+	"fmt"
+
 	"gopkg.in/yaml.v2"
+
+	time "github.com/geaaru/time-master/pkg/time"
 )
 
 func ScenarioFromYaml(data []byte, file string) (*Scenario, error) {
@@ -37,4 +42,101 @@ func ScenarioFromYaml(data []byte, file string) (*Scenario, error) {
 
 func (s *Scenario) SetNow(n string) {
 	s.NowTime = n
+}
+
+func (s *Scenario) GetResourceCost4Date(dstr, resourceUser string) (float64, error) {
+	ans := float64(0)
+	notFound := true
+
+	d, err := time.ParseTimestamp(dstr, true)
+	if err != nil {
+		return ans, err
+	}
+
+	for _, r := range s.ResourceCosts {
+		if r.User != resourceUser {
+			continue
+		}
+
+		startTime, err := time.ParseTimestamp(r.Period.StartPeriod, true)
+		if err != nil {
+			return ans, err
+		}
+
+		if startTime.Unix() > d.Unix() {
+			continue
+		}
+
+		if r.Period.EndPeriod != "" {
+			endTime, err := time.ParseTimestamp(r.Period.EndPeriod, true)
+			if err != nil {
+				return ans, err
+			}
+
+			if endTime.Unix() <= d.Unix() {
+				continue
+			}
+		}
+
+		notFound = false
+		ans = r.Cost
+		break
+	}
+
+	if notFound {
+		return ans, errors.New(
+			fmt.Sprintf("No resource cost found for user %s and period %s",
+				resourceUser, dstr))
+	}
+
+	return ans, nil
+}
+
+func (s *Scenario) GetResourceRate4Date(dstr, resourceUser string) (float64, error) {
+
+	ans := float64(0)
+	notFound := true
+
+	d, err := time.ParseTimestamp(dstr, true)
+	if err != nil {
+		return ans, err
+	}
+
+	for _, r := range s.Rates {
+		if r.User != resourceUser {
+			continue
+		}
+
+		startTime, err := time.ParseTimestamp(r.Period.StartPeriod, true)
+		if err != nil {
+			return ans, err
+		}
+
+		if startTime.Unix() > d.Unix() {
+			continue
+		}
+
+		if r.Period.EndPeriod != "" {
+			endTime, err := time.ParseTimestamp(r.Period.EndPeriod, true)
+			if err != nil {
+				return ans, err
+			}
+
+			if endTime.Unix() <= d.Unix() {
+				continue
+			}
+		}
+
+		notFound = false
+		ans = r.Rate
+		break
+	}
+
+	if notFound {
+		return ans, errors.New(
+			fmt.Sprintf("No resource rate found for user %s and period %s",
+				resourceUser, dstr))
+	}
+
+	return ans, nil
 }

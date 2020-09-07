@@ -30,6 +30,57 @@ import (
 	tmtime "github.com/geaaru/time-master/pkg/time"
 )
 
+func (i *TimeMasterInstance) CalculateTimesheetsCostAndRevenue(sName string) error {
+
+	scenario, err := i.GetScenarioByName(sName)
+	if err != nil {
+		return err
+	}
+
+	for idx, _ := range i.Timesheets {
+		agenda := &i.Timesheets[idx]
+
+		for idx_t, rt := range agenda.Timesheets {
+
+			cost, err := scenario.GetResourceCost4Date(rt.Period.StartPeriod, rt.User)
+			if err != nil {
+				return err
+			}
+
+			rate, err := scenario.GetResourceRate4Date(rt.Period.StartPeriod, rt.User)
+			if err != nil {
+				return err
+			}
+
+			workDaySec, _ := tmtime.ParseDuration("1d", i.Config.GetWork().WorkHours)
+			secs, err := rt.GetSeconds(i.Config.GetWork().WorkHours)
+			if err != nil {
+				return err
+			}
+
+			activityName := rt.ResolveActivityByName()
+			activity, _, err := i.GetActivityByName(activityName)
+			if err != nil {
+				return err
+			}
+			costRt := (cost / float64(workDaySec)) * float64(secs)
+
+			var revenueRt float64
+			if activity.IsTimeAndMaterial() {
+				revenueRt = (activity.GetTimeAndMaterialDailyOffer() / float64(workDaySec)) * float64(secs)
+			} else {
+				revenueRt = (rate / float64(workDaySec)) * float64(secs)
+			}
+
+			agenda.Timesheets[idx_t].SetCost(costRt)
+			agenda.Timesheets[idx_t].SetRevenue(revenueRt)
+
+		}
+	}
+
+	return nil
+}
+
 func (i *TimeMasterInstance) GetAggregatedTimesheetsMap(opts specs.TimesheetResearch, from, to string, users []string, tasks []string) (map[string]*specs.ResourceTsAggregated, error) {
 
 	var rta *specs.ResourceTsAggregated

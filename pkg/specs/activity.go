@@ -56,13 +56,10 @@ func (a *Activity) AddTask(t *Task) {
 	a.Tasks = append(a.Tasks, *t)
 }
 
-func (a *Activity) IsClosed() bool {
-	return a.Closed
-}
-
-func (a *Activity) GetOffer() int64 {
-	return a.Offer
-}
+func (a *Activity) IsClosed() bool                        { return a.Closed }
+func (a *Activity) GetOffer() int64                       { return a.Offer }
+func (a *Activity) IsTimeAndMaterial() bool               { return a.TimeMaterial }
+func (a *Activity) GetTimeAndMaterialDailyOffer() float64 { return a.TMDailyOffer }
 
 func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64

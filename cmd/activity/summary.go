@@ -33,22 +33,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity string) (string, int64, error) {
+func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity, scenario string) (string, int64, float64, float64, error) {
 
 	researchOpts := specs.TimesheetResearch{
 		ByActivity: true,
 		IgnoreTime: true,
 	}
 
+	if scenario != "" {
+		// Assign cost/revenue to ResourceTimesheet
+		err := tm.CalculateTimesheetsCostAndRevenue(scenario)
+		if err != nil {
+			return "", 0, 0, 0, err
+		}
+	}
+
 	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, "", "", []string{}, []string{activity})
 	if err != nil {
-		return "", 0, err
+		return "", 0, 0, 0, err
 	}
 
 	if len(*rtaList) > 0 {
-		return (*rtaList)[0].GetDuration(), (*rtaList)[0].GetSeconds(), nil
+		return (*rtaList)[0].GetDuration(), (*rtaList)[0].GetSeconds(),
+			(*rtaList)[0].GetCost(), (*rtaList)[0].GetRevenue(), nil
 	}
-	return "0", 0, nil
+	return "0", 0, 0, 0, nil
 }
 
 func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
@@ -76,6 +85,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			onlyClosed, _ := cmd.Flags().GetBool("only-closed")
 			closed, _ := cmd.Flags().GetBool("closed")
+			scenario, _ := cmd.Flags().GetString("scenario-name")
+			scenarioFile, _ := cmd.Flags().GetString("scenario")
 
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
@@ -86,6 +97,18 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				os.Exit(1)
 			}
 
+			if scenarioFile != "" {
+				prevision, err := specs.ScenarioScheduleFromFile(scenarioFile)
+				if err != nil {
+					fmt.Println("Error on load scenario file: " + err.Error())
+					os.Exit(1)
+				}
+
+				tm.SetAgendaTimesheets([]specs.AgendaTimesheets{
+					*prevision.GetAllResourceTimesheets(),
+				})
+			}
+
 			cname := args[0]
 			client, err := tm.GetClientByName(cname)
 			if err != nil {
@@ -94,18 +117,27 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			}
 
 			var duration string
-			var totEffort int64
-			var totWork int64
+			var totEffort, totWork, totOffer int64
+			var totCost, totRevenueRate, totProfit float64
 
-			totEffort = 0
-			totWork = 0
+			totEffort = int64(0)
+			totWork = int64(0)
+			totCost = float64(0)
+			totRevenueRate = float64(0)
+			totProfit = float64(0)
+
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetBorders(tablewriter.Border{
 				Left:   true,
 				Top:    true,
 				Right:  true,
 				Bottom: true})
-			table.SetHeader([]string{"Name", "Description", "# Tasks", "% (of Plan)", "Work", "Effort"})
+			headers := []string{"Name", "Description", "# Tasks", "% (of Plan)", "Work", "Effort"}
+			if scenario != "" {
+				headers = append(headers, []string{"Cost", "Offer", "Revenue on Rate", "Profit"}...)
+			}
+
+			table.SetHeader(headers)
 			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 			table.SetColMinWidth(1, 60)
 			table.SetColWidth(100)
@@ -130,7 +162,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				duration, err = time.Seconds2Duration(effort)
 
 				// Retrieve work time
-				work, workSecs, err := retrieveWorkTimeByActivity(tm, activity.Name)
+				work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
@@ -141,17 +173,41 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
 				}
 
-				table.Append([]string{
+				row := []string{
 					activity.Name,
 					activity.Description,
 					fmt.Sprintf("%d", len(activity.Tasks)),
 					perc,
 					work,
 					duration,
-				})
+				}
+
+				profit := float64(activity.Offer) - cost
+				if scenario != "" {
+					row = append(row, fmt.Sprintf("%02.02f", cost))
+					row = append(row, fmt.Sprintf("%d", activity.Offer))
+					row = append(row, fmt.Sprintf("%02.02f", revenue))
+					if activity.Offer > 0 && workSecs > 0 {
+						profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(activity.Offer)))
+						row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
+						totProfit += profit
+					} else if activity.IsTimeAndMaterial() {
+						profit := revenue - cost
+						profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(revenue)))
+						row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
+						totProfit += profit
+					} else {
+						row = append(row, "0")
+					}
+				}
+
+				table.Append(row)
 
 				totEffort += effort
 				totWork += workSecs
+				totOffer += activity.Offer
+				totCost += cost
+				totRevenueRate += revenue
 			} else {
 
 				// Print all activities
@@ -178,7 +234,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					}
 
 					// Retrieve work time
-					work, workSecs, err := retrieveWorkTimeByActivity(tm, activity.Name)
+					work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
 					if err != nil {
 						fmt.Println(err.Error())
 						os.Exit(1)
@@ -189,18 +245,45 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
 					}
 
-					table.Append([]string{
+					row := []string{
 						activity.Name,
 						activity.Description,
 						fmt.Sprintf("%d", len(activity.Tasks)),
 						perc,
 						work,
 						duration,
-					})
+					}
+
+					profit := float64(activity.Offer) - cost
+					if scenario != "" {
+
+						row = append(row, fmt.Sprintf("%02.02f", cost))
+						row = append(row, fmt.Sprintf("%d", activity.Offer))
+						row = append(row, fmt.Sprintf("%02.02f", revenue))
+						if activity.Offer > 0 && workSecs > 0 {
+
+							profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(activity.Offer)))
+							row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
+							totProfit += profit
+						} else if activity.IsTimeAndMaterial() {
+							profit := revenue - cost
+							profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(revenue)))
+							row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
+							totProfit += profit
+
+						} else {
+							row = append(row, "0")
+						}
+					}
+
+					table.Append(row)
 
 					nActivity += 1
 					totEffort += effort
+					totOffer += activity.Offer
 					totWork += workSecs
+					totCost += cost
+					totRevenueRate += revenue
 				}
 
 			}
@@ -211,14 +294,27 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			if nActivity == 0 {
 				fmt.Println("No activities found")
 			} else {
-				table.SetFooter([]string{
+
+				footers := []string{
 					fmt.Sprintf("Total (%d)", nActivity),
 					"",
 					"",
 					"",
 					durationWork,
 					duration,
-				})
+				}
+
+				if scenario != "" {
+					profit_perc := fmt.Sprintf("%02.02f", ((float64(totProfit) * 100) / float64(totCost+totProfit)))
+					footers = append(footers, []string{
+						fmt.Sprintf("%02.02f", totCost),
+						fmt.Sprintf("%d", totOffer),
+						fmt.Sprintf("%02.02f", totRevenueRate),
+						fmt.Sprintf("%02.02f (%s)", totProfit, profit_perc),
+					}...)
+				}
+
+				table.SetFooter(footers)
 
 				table.Render()
 			}
@@ -228,6 +324,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags := cmd.Flags()
 	flags.Bool("closed", false, "Include closed activities.")
 	flags.Bool("only-closed", false, "Show only closed activities.")
+	flags.String("scenario-name", "", "Specify scenario name for cost/revenue.")
+	flags.String("scenario", "", "Specify path of the scenario prevision to load.")
 
 	return cmd
 }

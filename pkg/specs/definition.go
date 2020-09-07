@@ -76,7 +76,9 @@ type Activity struct {
 	Disabled    bool   `json:"disabled,omitempty" yaml:"disabled,omitempty"`
 	Closed      bool   `json:"closed,omitempty" yaml:"closed,omitempty"`
 
-	Offer int64 `json:"offer,omitempty" yaml:"offer,omitempty"`
+	Offer        int64   `json:"offer,omitempty" yaml:"offer,omitempty"`
+	TimeMaterial bool    `json:"time_material,omitempty" yaml:"time_material,omitempty"`
+	TMDailyOffer float64 `json:"time_material_daily_offer,omitempty" yaml:"time_material_daily_offer,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
@@ -175,6 +177,10 @@ type ResourceTimesheet struct {
 	Task     string `json:"task" yaml:"task"`
 	Duration string `json:"duration" yaml:"duration"`
 	Note     string `json:"note,omitempty" yaml:"note,omitempty"`
+
+	// Internal
+	Cost    float64 `json:"cost,omitempty" yaml:"cost,omitempty"`
+	Revenue float64 `json:"revenue,omitempty" yaml:"revenue,omitempty"`
 }
 
 type ResourceTsAggregated struct {
@@ -183,6 +189,9 @@ type ResourceTsAggregated struct {
 	Task     string `json:"task,omitempty" yaml:"task,omitempty"`
 	Duration string `json:"duration" yaml:"duration"`
 	Seconds  int64  `json:"-" yaml:"-"`
+
+	Cost    float64 `json:"cost,omitempty" yaml:"cost,omitempty"`
+	Revenue float64 `json:"revenue,omitempty" yaml:"revenue,omitempty"`
 }
 
 type TimesheetResearch struct {

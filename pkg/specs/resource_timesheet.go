@@ -101,6 +101,14 @@ func (rt *ResourceTimesheet) GetSeconds(workHours int) (int64, error) {
 	return time.ParseDuration(rt.Duration, workHours)
 }
 
+func (rt *ResourceTimesheet) SetCost(c float64)    { rt.Cost = c }
+func (rt *ResourceTimesheet) SetRevenue(r float64) { rt.Revenue = r }
+
+func (rt *ResourceTimesheet) ResolveActivityByName() string {
+	leafs := strings.Split(rt.Task, ".")
+	return leafs[0]
+}
+
 func NewResourceTsAggregated(date, user, task string) *ResourceTsAggregated {
 	return &ResourceTsAggregated{
 		Period: &Period{
@@ -118,6 +126,8 @@ func (rta *ResourceTsAggregated) AddResourceTimesheet(rt *ResourceTimesheet, wor
 		return err
 	}
 	rta.Seconds += secs
+	rta.Cost += rt.Cost
+	rta.Revenue += rt.Revenue
 
 	return nil
 }
@@ -134,3 +144,6 @@ func (rta *ResourceTsAggregated) GetDuration() string {
 func (rta *ResourceTsAggregated) GetSeconds() int64 {
 	return rta.Seconds
 }
+
+func (rta *ResourceTsAggregated) GetCost() float64    { return rta.Cost }
+func (rta *ResourceTsAggregated) GetRevenue() float64 { return rta.Revenue }

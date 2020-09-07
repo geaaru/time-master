@@ -189,6 +189,10 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 		if err != nil {
 			return err
 		}
+		nowTime, err := time.ParseTimestamp(workDate, true)
+		if err != nil {
+			return err
+		}
 
 		inProgressTasks := []specs.TaskScheduled{}
 
@@ -198,6 +202,17 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 
 			if len(t.AllocatedResource) == 0 {
 				return errors.New(fmt.Sprintf("No resources for task %s", t.Name))
+			}
+
+			if t.Period.StartPeriod != "" {
+				workTime, err := time.ParseTimestamp(t.Period.StartPeriod, true)
+				if err != nil {
+					return err
+				}
+				if nowTime.Unix() < workTime.Unix() {
+					// POST: task start not now. I waiting for the right day.
+					continue
+				}
 			}
 
 			availableSecs := workDaySec
