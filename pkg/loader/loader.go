@@ -274,6 +274,8 @@ func (i *TimeMasterInstance) LoadClientActivities(clientName, dir string) error 
 		} else {
 			i.Logger.Debug("Loading activity " + activity.Name)
 
+			activity.InitDefaultPriority(i.Config.GetWork().TaskDefaultPriority)
+
 			client.AddActivity(*activity)
 		}
 

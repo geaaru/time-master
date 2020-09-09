@@ -54,6 +54,30 @@ func NewTask(name, description, effort string, resources []string) *Task {
 	}
 }
 
+func (t *Task) Clone(filtered bool) *Task {
+	var ans *Task
+	if filtered {
+		ans = NewTask(t.Name, t.Description, "", t.AllocatedResource)
+	} else {
+		ans = NewTask(t.Name, t.Description, t.Effort, t.AllocatedResource)
+	}
+
+	ans.Note = t.Note
+	ans.Priority = t.Priority
+	ans.Completed = t.Completed
+	ans.Milestone = t.Milestone
+	ans.Flags = t.Flags
+	ans.Labels = t.Labels
+	ans.Depends = t.Depends
+	ans.Recursive = t.Recursive
+
+	for _, subtask := range t.Tasks {
+		ans.Tasks = append(ans.Tasks, *subtask.Clone(filtered))
+	}
+
+	return ans
+}
+
 func (t *Task) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 	var ans int64
 	var err error
@@ -198,6 +222,20 @@ func (t *Task) Validate(ignoreError bool) error {
 	}
 
 	return nil
+}
+
+func (t *Task) InitDefaultPriority(prio int) {
+	if t.Priority == 0 {
+		t.Priority = prio
+	}
+
+	if len(t.Tasks) > 0 {
+		for idx, _ := range t.Tasks {
+			if t.Tasks[idx].Priority == 0 {
+				t.Tasks[idx].Priority = prio
+			}
+		}
+	}
 }
 
 func (ts *TaskRecursiveOpts) GetMode() string     { return ts.Mode }

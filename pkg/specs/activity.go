@@ -142,3 +142,14 @@ func (a *Activity) HasLabelKey(key string) bool {
 	}
 	return false
 }
+
+func (a *Activity) InitDefaultPriority(prio int) {
+	if a.Priority == 0 {
+		a.Priority = prio
+	}
+	if len(a.Tasks) > 0 {
+		for idx, _ := range a.Tasks {
+			a.Tasks[idx].InitDefaultPriority(prio)
+		}
+	}
+}
