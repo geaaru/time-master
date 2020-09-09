@@ -22,6 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd_activity
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -40,14 +42,6 @@ func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity, scenari
 		IgnoreTime: true,
 	}
 
-	if scenario != "" {
-		// Assign cost/revenue to ResourceTimesheet
-		err := tm.CalculateTimesheetsCostAndRevenue(scenario)
-		if err != nil {
-			return "", 0, 0, 0, err
-		}
-	}
-
 	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, "", "", []string{}, []string{activity})
 	if err != nil {
 		return "", 0, 0, 0, err
@@ -61,14 +55,15 @@ func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity, scenari
 }
 
 func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
+	var activityNames []string
+	var activityLabels []string
+	var activityFlags []string
+	var clients []string
+
 	var cmd = &cobra.Command{
-		Use:   "summary <client-name> <activity-name>",
+		Use:   "summary [<client-name> [<activity-name>]]",
 		Short: "Show a summary of a specific activity.",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				fmt.Println("Missing client name")
-				os.Exit(1)
-			}
 			if len(args) > 2 {
 				fmt.Println("Too many arguments")
 				os.Exit(1)
@@ -85,6 +80,10 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			onlyClosed, _ := cmd.Flags().GetBool("only-closed")
 			closed, _ := cmd.Flags().GetBool("closed")
+			minimal, _ := cmd.Flags().GetBool("minimal")
+			labelsInAnd, _ := cmd.Flags().GetBool("labels-in-and")
+			jsonOutput, _ := cmd.Flags().GetBool("json")
+			csvOutput, _ := cmd.Flags().GetBool("csv")
 			scenario, _ := cmd.Flags().GetString("scenario-name")
 			scenarioFile, _ := cmd.Flags().GetString("scenario")
 
@@ -109,11 +108,74 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				})
 			}
 
-			cname := args[0]
-			client, err := tm.GetClientByName(cname)
+			if scenario != "" {
+				// Assign cost/revenue to ResourceTimesheet
+				err := tm.CalculateTimesheetsCostAndRevenue(scenario)
+				if err != nil {
+					fmt.Println("Error on calculate cost/revenue: " + err.Error())
+					os.Exit(1)
+				}
+			}
+
+			if len(args) > 0 {
+				cname := args[0]
+				_, err := tm.GetClientByName(cname)
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+
+				clients = append(clients, cname)
+
+				if len(args) == 2 {
+					aname := args[1]
+
+					_, _, err := tm.GetActivityByName(aname)
+					if err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
+
+					activityNames = append(activityNames, aname)
+				}
+			}
+
+			// Create activity filter
+			opts := specs.ActivityResearch{
+				ClosedActivity:     closed,
+				OnlyClosedActivity: onlyClosed,
+				Flags:              activityFlags,
+				Labels:             activityLabels,
+				Clients:            clients,
+				Names:              activityNames,
+				LabelsInAnd:        labelsInAnd,
+			}
+
+			activities, err := tm.GetActivities(opts)
 			if err != nil {
-				fmt.Println(err.Error())
+				fmt.Println("Error on retrieve list of the activities: " + err.Error())
 				os.Exit(1)
+			}
+
+			activitiesReport := []specs.ActivityReport{}
+
+			if len(activities) == 0 {
+				if jsonOutput {
+
+					data, err := json.Marshal(activitiesReport)
+					if err != nil {
+						fmt.Println("Error on convert data to json: " + err.Error())
+						os.Exit(1)
+					}
+					fmt.Println(string(data))
+
+				} else if csvOutput {
+					fmt.Println("TODO")
+				} else {
+					fmt.Println("No activities found")
+				}
+
+				os.Exit(0)
 			}
 
 			var duration string
@@ -126,40 +188,20 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			totRevenueRate = float64(0)
 			totProfit = float64(0)
 
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetBorders(tablewriter.Border{
-				Left:   true,
-				Top:    true,
-				Right:  true,
-				Bottom: true})
-			headers := []string{"Name", "Description", "# Tasks", "% (of Plan)", "Work", "Effort"}
-			if scenario != "" {
-				headers = append(headers, []string{"Cost", "Offer", "Revenue on Rate", "Profit"}...)
-			}
-
-			table.SetHeader(headers)
-			table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
-			table.SetColMinWidth(1, 60)
-			table.SetColWidth(100)
-			nActivity := 0
-
-			if len(args) == 2 {
-				aname := args[1]
-
-				activity, err := client.GetActivityByName(aname)
-				if err != nil {
-					fmt.Println(err.Error())
-					os.Exit(1)
-				}
-
-				nActivity = 1
+			// Print all activities
+			for _, activity := range activities {
 
 				effort, err := activity.GetPlannedEffortTotSecs(config.GetWork().WorkHours)
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
 				}
-				duration, err = time.Seconds2Duration(effort)
+
+				if effort > 0 {
+					duration, err = time.Seconds2Duration(effort)
+				} else {
+					duration = ""
+				}
 
 				// Retrieve work time
 				work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
@@ -168,164 +210,194 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					os.Exit(1)
 				}
 
-				perc := ""
-				if workSecs > 0 && effort > 0 {
-					perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
-				}
-
-				row := []string{
-					activity.Name,
-					activity.Description,
-					fmt.Sprintf("%d", len(activity.Tasks)),
-					perc,
-					work,
-					duration,
-				}
-
 				profit := float64(activity.Offer) - cost
 				if scenario != "" {
-					row = append(row, fmt.Sprintf("%02.02f", cost))
-					row = append(row, fmt.Sprintf("%d", activity.Offer))
-					row = append(row, fmt.Sprintf("%02.02f", revenue))
+
 					if activity.Offer > 0 && workSecs > 0 {
-						profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(activity.Offer)))
-						row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
 						totProfit += profit
 					} else if activity.IsTimeAndMaterial() {
-						profit := revenue - cost
-						profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(revenue)))
-						row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
+						profit = revenue - cost
 						totProfit += profit
-					} else {
-						row = append(row, "0")
 					}
 				}
 
-				table.Append(row)
+				aReport := specs.NewActivityReport(activity, minimal)
+
+				aReport.SetEffort(effort)
+				aReport.SetWorkSecs(workSecs)
+
+				aReport.CalculateWorkPerc()
+
+				if !minimal {
+					aReport.SetRevenuePlan(revenue)
+					aReport.SetCost(cost)
+					aReport.SetProfit(profit)
+					aReport.SetWork(work)
+					aReport.CalculateProfitPerc()
+				} else {
+					// Reset effort/secs
+					aReport.SetEffort(0)
+					aReport.SetWorkSecs(0)
+
+					if activity.Closed {
+						// I consider closed the job
+						aReport.SetWorkPerc("100.0")
+					}
+				}
+
+				activitiesReport = append(activitiesReport, *aReport)
 
 				totEffort += effort
-				totWork += workSecs
 				totOffer += activity.Offer
+				totWork += workSecs
 				totCost += cost
 				totRevenueRate += revenue
+			}
+
+			if jsonOutput {
+				data, err := json.Marshal(activitiesReport)
+				if err != nil {
+					fmt.Println("Error on convert activities to json: " + err.Error())
+					os.Exit(1)
+				}
+				fmt.Println(string(data))
 			} else {
+				var table *tablewriter.Table
+				records := make([][]string, len(activitiesReport)+1)
 
-				// Print all activities
-				for _, activity := range *client.GetActivities() {
+				headers := []string{"Name", "Description", "% (of Plan)"}
+				if !minimal {
+					headers = append(headers, []string{"# Tasks", "Work", "Effort"}...)
+					if scenario != "" {
+						headers = append(headers, []string{"Cost", "Offer", "Revenue Plan", "Profit", "% Profit"}...)
+					}
+				}
 
-					if onlyClosed {
-						if !activity.IsClosed() {
-							continue
+				if !csvOutput {
+
+					table = tablewriter.NewWriter(os.Stdout)
+					table.SetBorders(tablewriter.Border{
+						Left:   true,
+						Top:    true,
+						Right:  true,
+						Bottom: true})
+
+					table.SetHeader(headers)
+					table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
+					table.SetColMinWidth(1, 60)
+					table.SetColWidth(100)
+
+					duration, _ = time.Seconds2Duration(totEffort)
+					durationWork, _ := time.Seconds2Duration(totWork)
+					footers := []string{
+						fmt.Sprintf("Total (%d)", len(activities)),
+						"",
+						"",
+					}
+
+					if !minimal {
+						footers = append(footers, []string{"", durationWork, duration}...)
+						if scenario != "" {
+							profit_perc := fmt.Sprintf("%02.02f", ((float64(totProfit) * 100) / float64(totCost+totProfit)))
+							footers = append(footers, []string{
+								fmt.Sprintf("%02.02f", totCost),
+								fmt.Sprintf("%d", totOffer),
+								fmt.Sprintf("%02.02f", totRevenueRate),
+								fmt.Sprintf("%02.02f", totProfit),
+								fmt.Sprintf("%s", profit_perc),
+							}...)
 						}
-					} else if !closed && activity.IsClosed() {
-						continue
 					}
 
-					effort, err := activity.GetPlannedEffortTotSecs(config.GetWork().WorkHours)
-					if err != nil {
-						fmt.Println(err.Error())
-						os.Exit(1)
-					}
+					table.SetFooter(footers)
 
-					if effort > 0 {
-						duration, err = time.Seconds2Duration(effort)
-					} else {
-						duration = ""
-					}
+				} else {
+					records[0] = headers
+				}
 
-					// Retrieve work time
-					work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
-					if err != nil {
-						fmt.Println(err.Error())
-						os.Exit(1)
-					}
-
-					perc := ""
-					if workSecs > 0 && effort > 0 {
-						perc = fmt.Sprintf("%02.02f", (float64(workSecs)/float64(effort))*100)
-					}
+				for idx, activity := range activitiesReport {
 
 					row := []string{
 						activity.Name,
 						activity.Description,
-						fmt.Sprintf("%d", len(activity.Tasks)),
-						perc,
-						work,
-						duration,
+						activity.WorkPerc,
 					}
 
-					profit := float64(activity.Offer) - cost
-					if scenario != "" {
+					if !minimal {
+						row = append(row, []string{
+							fmt.Sprintf("%d", len(activity.Tasks)),
+							activity.Work,
+							activity.GetDuration(),
+						}...)
 
-						row = append(row, fmt.Sprintf("%02.02f", cost))
-						row = append(row, fmt.Sprintf("%d", activity.Offer))
-						row = append(row, fmt.Sprintf("%02.02f", revenue))
-						if activity.Offer > 0 && workSecs > 0 {
+						if scenario != "" {
 
-							profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(activity.Offer)))
-							row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
-							totProfit += profit
-						} else if activity.IsTimeAndMaterial() {
-							profit := revenue - cost
-							profit_perc := fmt.Sprintf("%02.02f", ((float64(profit) * 100) / float64(revenue)))
-							row = append(row, fmt.Sprintf("%02.02f (%s)", profit, profit_perc))
-							totProfit += profit
-
-						} else {
-							row = append(row, "0")
+							row = append(row, fmt.Sprintf("%02.02f", activity.Cost))
+							row = append(row, fmt.Sprintf("%d", activity.Offer))
+							row = append(row, fmt.Sprintf("%02.02f", activity.RevenuePlan))
+							if activity.Offer > 0 && activity.WorkSecs > 0 {
+								row = append(row, fmt.Sprintf("%02.02f", activity.Profit))
+							} else if activity.IsTimeAndMaterial() {
+								row = append(row, fmt.Sprintf("%02.02f", activity.Profit))
+							} else {
+								row = append(row, "0")
+							}
+							row = append(row, fmt.Sprintf("%s", activity.ProfitPerc))
 						}
 					}
 
-					table.Append(row)
+					if csvOutput {
+						records[idx+1] = row
+					} else {
+						table.Append(row)
+					}
 
-					nActivity += 1
-					totEffort += effort
-					totOffer += activity.Offer
-					totWork += workSecs
-					totCost += cost
-					totRevenueRate += revenue
+				}
+
+				if csvOutput {
+					w := csv.NewWriter(os.Stdout)
+					for _, record := range records {
+						if err := w.Write(record); err != nil {
+							fmt.Println("error writing record to csv:", err)
+							os.Exit(1)
+						}
+					}
+
+					// Write any buffered data to the underlying writer (standard output).
+					w.Flush()
+
+					if err := w.Error(); err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
+
+				} else {
+					table.Render()
 				}
 
 			}
 
-			duration, err = time.Seconds2Duration(totEffort)
-			durationWork, err := time.Seconds2Duration(totWork)
-
-			if nActivity == 0 {
-				fmt.Println("No activities found")
-			} else {
-
-				footers := []string{
-					fmt.Sprintf("Total (%d)", nActivity),
-					"",
-					"",
-					"",
-					durationWork,
-					duration,
-				}
-
-				if scenario != "" {
-					profit_perc := fmt.Sprintf("%02.02f", ((float64(totProfit) * 100) / float64(totCost+totProfit)))
-					footers = append(footers, []string{
-						fmt.Sprintf("%02.02f", totCost),
-						fmt.Sprintf("%d", totOffer),
-						fmt.Sprintf("%02.02f", totRevenueRate),
-						fmt.Sprintf("%02.02f (%s)", totProfit, profit_perc),
-					}...)
-				}
-
-				table.SetFooter(footers)
-
-				table.Render()
-			}
 		},
 	}
 
 	flags := cmd.Flags()
+	flags.Bool("minimal", false, "Show only minimal data on report.")
 	flags.Bool("closed", false, "Include closed activities.")
+	flags.Bool("json", false, "Print output in JSON format.")
+	flags.Bool("csv", false, "Print output in CSV format.")
 	flags.Bool("only-closed", false, "Show only closed activities.")
+	flags.Bool("labels-in-and", false, "Filter labels in AND. Default match is in OR.")
 	flags.String("scenario-name", "", "Specify scenario name for cost/revenue.")
 	flags.String("scenario", "", "Specify path of the scenario prevision to load.")
+
+	flags.StringSliceVar(&clients, "client", []string{}, "Filter for client with specified name.")
+	flags.StringSliceVarP(&activityNames, "activity", "a",
+		[]string{}, "Filter for activities with specified name.")
+
+	flags.StringSliceVar(&activityFlags, "flag", []string{},
+		"Filter for activities with specificied flag.")
+	flags.StringSliceVar(&activityLabels, "label", []string{},
+		"Filter for activities with specificied label.")
 
 	return cmd
 }
