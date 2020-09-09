@@ -194,29 +194,6 @@ type ResourceTsAggregated struct {
 	Revenue float64 `json:"revenue,omitempty" yaml:"revenue,omitempty"`
 }
 
-type TimesheetResearch struct {
-	ByUser     bool
-	ByTask     bool
-	ByActivity bool
-	Monthly    bool
-	IgnoreTime bool
-}
-
-type TaskResearch struct {
-	ClosedActivity     bool
-	OnlyClosedActivity bool
-	Milestone          bool
-	OnlyMilestone      bool
-	WithEffort         bool
-	Users              []string
-	Flags              []string
-	ActivityFlags      []string
-	Labels             []string
-	ActivityLabels     []string
-	Tasks              []string
-	Clients            []string
-}
-
 type TaskScheduled struct {
 	*Task
 	*Period
