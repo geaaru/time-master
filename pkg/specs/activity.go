@@ -134,6 +134,16 @@ func (a *Activity) GetAllTasksList() []Task {
 	return ans
 }
 
+func (a *Activity) HasFlag(flag string) bool {
+	for _, f := range a.Flags {
+		if f == flag {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (a *Activity) HasLabelKey(key string) bool {
 	for k, _ := range a.Labels {
 		if k == key {
