@@ -46,13 +46,22 @@ type TimeMasterScheduler interface {
 }
 
 type SchedulerOpts struct {
-	Clients              []string
-	Activities           []string
-	ExcludeTaskFlags     []string
-	FilterPreElaboration bool
-	OnlyClosed           bool
-	SkipEmptyTasks       bool
-	SkipPlan             bool
+	SkipPlan       bool
+	OnlyClosed     bool
+	SkipEmptyTasks bool
+
+	// Pre elaboration filter
+
+	PreClients              []string
+	PreActivities           []string
+	PreExcludeTaskFlags     []string
+	PreExcludeActivityFlags []string
+
+	// Post elaboration filter
+	PostClients              []string
+	PostActivities           []string
+	PostExcludeTaskFlags     []string
+	PostExcludeActivityFlags []string
 }
 
 type DefaultScheduler struct {
@@ -100,54 +109,51 @@ func (s *DefaultScheduler) GetTaskMap() *map[string]*specs.TaskScheduled {
 
 func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {
 
-	if !opts.FilterPreElaboration {
+	if len(opts.PostClients) > 0 {
 
-		if len(opts.Clients) > 0 {
+		tasks := []specs.TaskScheduled{}
 
-			tasks := []specs.TaskScheduled{}
+		for idx, ts := range s.Scenario.Schedule {
 
-			for idx, ts := range s.Scenario.Schedule {
-
-				found := false
-				for _, c := range opts.Clients {
-					if ts.Client.GetName() == c {
-						found = true
-						break
-					}
+			found := false
+			for _, c := range opts.PostClients {
+				if ts.Client.GetName() == c {
+					found = true
+					break
 				}
-
-				if found {
-					tasks = append(tasks, s.Scenario.Schedule[idx])
-				}
-
 			}
 
-			s.Scenario.Schedule = tasks
+			if found {
+				tasks = append(tasks, s.Scenario.Schedule[idx])
+			}
 
 		}
 
-		if len(opts.Activities) > 0 {
+		s.Scenario.Schedule = tasks
 
-			tasks := []specs.TaskScheduled{}
+	}
 
-			for idx, ts := range s.Scenario.Schedule {
+	if len(opts.PostActivities) > 0 {
 
-				found := false
-				for _, c := range opts.Activities {
-					if ts.Activity.Name == c {
-						found = true
-						break
-					}
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			found := false
+			for _, c := range opts.PostActivities {
+				if ts.Activity.Name == c {
+					found = true
+					break
 				}
-
-				if found {
-					tasks = append(tasks, s.Scenario.Schedule[idx])
-				}
-
 			}
 
-			s.Scenario.Schedule = tasks
+			if found {
+				tasks = append(tasks, s.Scenario.Schedule[idx])
+			}
+
 		}
+
+		s.Scenario.Schedule = tasks
 	}
 
 	if opts.SkipEmptyTasks {
@@ -175,15 +181,36 @@ func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {
 		s.Scenario.Schedule = tasks
 	}
 
-	if len(opts.ExcludeTaskFlags) > 0 {
+	if len(opts.PostExcludeTaskFlags) > 0 {
 		tasks := []specs.TaskScheduled{}
 
 		for idx, ts := range s.Scenario.Schedule {
 
 			excluded := false
-			for _, exclude := range opts.ExcludeTaskFlags {
+			for _, exclude := range opts.PostExcludeTaskFlags {
 
 				if ts.Task.HasFlag(exclude) {
+					excluded = true
+					break
+				}
+			}
+
+			if !excluded {
+				tasks = append(tasks, s.Scenario.Schedule[idx])
+			}
+		}
+		s.Scenario.Schedule = tasks
+	}
+
+	if len(opts.PostExcludeActivityFlags) > 0 {
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			excluded := false
+			for _, exclude := range opts.PostExcludeActivityFlags {
+
+				if ts.Activity.HasFlag(exclude) {
 					excluded = true
 					break
 				}
@@ -201,14 +228,10 @@ func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {
 
 func (s *DefaultScheduler) FilterPreElaboration(opts SchedulerOpts) error {
 
-	if !opts.FilterPreElaboration {
-		return errors.New("Unexpected filter pre elaboration called.")
-	}
-
-	if len(opts.Clients) > 0 {
+	if len(opts.PreClients) > 0 {
 		clients := []specs.Client{}
 
-		for _, c := range opts.Clients {
+		for _, c := range opts.PreClients {
 			for _, client := range s.Clients {
 				if client.Name == c {
 					clients = append(clients, client)
@@ -223,13 +246,13 @@ func (s *DefaultScheduler) FilterPreElaboration(opts SchedulerOpts) error {
 		s.Clients = clients
 	}
 
-	if len(opts.Activities) > 0 {
+	if len(opts.PreActivities) > 0 {
 
 		for idx, client := range s.Clients {
 
 			activities := []specs.Activity{}
 
-			for _, a := range opts.Activities {
+			for _, a := range opts.PreActivities {
 				for _, activity := range *client.GetActivities() {
 					if activity.Name == a {
 						activities = append(activities, activity)
@@ -240,6 +263,56 @@ func (s *DefaultScheduler) FilterPreElaboration(opts SchedulerOpts) error {
 
 			s.Clients[idx].Activities = activities
 		}
+	}
+
+	return nil
+}
+
+func (s *DefaultScheduler) FilterPreElaborationFlags(opts SchedulerOpts) error {
+
+	if len(opts.PreExcludeTaskFlags) > 0 {
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			excluded := false
+			for _, exclude := range opts.PreExcludeTaskFlags {
+
+				if ts.Task.HasFlag(exclude) {
+					excluded = true
+					break
+				}
+			}
+
+			if !excluded {
+				tasks = append(tasks, s.Scenario.Schedule[idx])
+			}
+		}
+		s.Scenario.Schedule = tasks
+	}
+
+	if len(opts.PreExcludeActivityFlags) > 0 {
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			excluded := false
+			for _, exclude := range opts.PreExcludeActivityFlags {
+
+				if ts.Activity.HasFlag(exclude) {
+					excluded = true
+					break
+				}
+			}
+
+			if !excluded {
+				tasks = append(tasks, s.Scenario.Schedule[idx])
+			} else {
+
+				s.Logger.Debug("Excluding task " + ts.Task.Name)
+			}
+		}
+		s.Scenario.Schedule = tasks
 	}
 
 	return nil
@@ -257,8 +330,7 @@ func (s *DefaultScheduler) SetTimesheets(t *[]specs.AgendaTimesheets) {
 	s.Timesheets = *t
 }
 
-func (s *DefaultScheduler) initializeTasks() {
-
+func (s *DefaultScheduler) createTaskScheduled() {
 	// Retrieve the list of all tasks
 	for idx_c, client := range s.Clients {
 
@@ -272,6 +344,9 @@ func (s *DefaultScheduler) initializeTasks() {
 		}
 
 	}
+}
+
+func (s *DefaultScheduler) initializeTasks() {
 
 	// Create a map of tasks
 	for idx, t := range s.Scenario.Schedule {

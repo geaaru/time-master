@@ -34,9 +34,15 @@ import (
 )
 
 func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
-	var clients []string
-	var activities []string
-	var tasksFlags []string
+	var preClients []string
+	var preActivities []string
+	var preTasksFlags []string
+	var preActivityFlags []string
+
+	var postClients []string
+	var postActivities []string
+	var postTasksFlags []string
+	var postActivityFlags []string
 
 	var cmd = &cobra.Command{
 		Use:   "build [scenario]",
@@ -53,7 +59,6 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			skipEmptyTasks, _ := cmd.Flags().GetBool("skip-empty-tasks")
 			skipPlan, _ := cmd.Flags().GetBool("skip-plan")
 			withClientData, _ := cmd.Flags().GetBool("with-client-data")
-			preFilter, _ := cmd.Flags().GetBool("pre-filter")
 			now, _ := cmd.Flags().GetString("now")
 			targetFile, _ := cmd.Flags().GetString("file")
 
@@ -90,13 +95,19 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			tm.InitScheduler(sched)
 
 			opts := scheduler.SchedulerOpts{
-				Clients:              clients,
-				Activities:           activities,
-				FilterPreElaboration: preFilter,
-				OnlyClosed:           onlyClosed,
-				SkipEmptyTasks:       skipEmptyTasks,
-				SkipPlan:             skipPlan,
-				ExcludeTaskFlags:     tasksFlags,
+				PreClients:              preClients,
+				PreActivities:           preActivities,
+				PreExcludeTaskFlags:     preTasksFlags,
+				PreExcludeActivityFlags: preActivityFlags,
+
+				PostClients:              postClients,
+				PostActivities:           postActivities,
+				PostExcludeTaskFlags:     postTasksFlags,
+				PostExcludeActivityFlags: postActivityFlags,
+
+				OnlyClosed:     onlyClosed,
+				SkipEmptyTasks: skipEmptyTasks,
+				SkipPlan:       skipPlan,
 			}
 
 			prevision, err := sched.BuildPrevision(opts)
@@ -161,14 +172,26 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.Bool("skip-empty-tasks", false, "Skip tasks closed without effort.")
 	flags.Bool("skip-plan", false, "Avoid simulation and report only available timesheets.")
 	flags.Bool("with-client-data", false, "Write also client data on prevision file.")
-	flags.Bool("pre-filter", false, "Apply filter before build prevision.")
 	flags.StringP("file", "f", "", "Set the file where to write calculate prevision.")
 	flags.String("now", "", "Override now value of the scenario in the format YYYY-MM-DD.")
 
-	flags.StringSliceVar(&clients, "client", []string{}, "Filter for client with specified name.")
-	flags.StringSliceVar(&tasksFlags, "exclude-flag", []string{}, "Exclude task with specified name.")
-	flags.StringSliceVarP(&activities, "activity", "a",
-		[]string{}, "Filter for activities with specified name.")
+	flags.StringSliceVar(&preClients, "pre-client", []string{},
+		"Filter for client with specified name in pre elaboration.")
+	flags.StringSliceVar(&preTasksFlags, "pre-exclude-flag", []string{},
+		"Exclude task with specified name in pre elaboration.")
+	flags.StringSliceVar(&preActivityFlags, "pre-exclude-aflag", []string{},
+		"Exclude task of the activity with specified name in pre elaboration.")
+	flags.StringSliceVar(&preActivities, "pre-activity",
+		[]string{}, "Filter for activities with specified name in pre elaboration.")
+
+	flags.StringSliceVar(&postClients, "post-client", []string{},
+		"Filter for client with specified name in post elaboration.")
+	flags.StringSliceVar(&postTasksFlags, "post-exclude-flag", []string{},
+		"Exclude task with specified name in post elaboration.")
+	flags.StringSliceVar(&postActivityFlags, "post-exclude-aflag", []string{},
+		"Exclude task of the activity with specified name in post elaboration.")
+	flags.StringSliceVar(&preActivities, "post-activity",
+		[]string{}, "Filter for activities with specified name in post elaboration.")
 
 	return cmd
 }

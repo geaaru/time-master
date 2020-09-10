@@ -63,11 +63,9 @@ func NewSimpleScheduler(config *specs.TimeMasterConfig, scenario *specs.Scenario
 
 func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSchedule, error) {
 
-	if opts.FilterPreElaboration {
-		err := s.FilterPreElaboration(opts)
-		if err != nil {
-			return nil, err
-		}
+	err := s.FilterPreElaboration(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	// Reset task map and schedule
@@ -77,10 +75,17 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 		s.ResourcesMap = make(map[string]*ResourceDailyMap, 0)
 	}
 
+	s.createTaskScheduled()
+
+	err = s.FilterPreElaborationFlags(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	s.initializeTasks()
 
 	// Assign resource timesheet to task scheduled
-	err := s.assignTimesheets()
+	err = s.assignTimesheets()
 	if err != nil {
 		return nil, err
 	}
