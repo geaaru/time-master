@@ -63,7 +63,7 @@ function draw() {
               url = origin + path;
             }
 
-      fetch(url + "/tasks.json").then(async (resp) => {
+      fetch(url + "/tasks.json?ver="+ Date.now()).then(async (resp) => {
         const tasks = await resp.json();
         var gantt_chart = new Gantt(".gantt-target", tasks, {
           date_format: 'YYYY-MM-DD',
