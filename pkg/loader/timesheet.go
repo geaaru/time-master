@@ -22,12 +22,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package loader
 
 import (
-	"regexp"
 	"strings"
 	"time"
 
 	specs "github.com/geaaru/time-master/pkg/specs"
 	tmtime "github.com/geaaru/time-master/pkg/time"
+	tools "github.com/geaaru/time-master/pkg/tools"
 )
 
 func (i *TimeMasterInstance) CalculateTimesheetsCostAndRevenue(sName string) error {
@@ -113,10 +113,10 @@ func (i *TimeMasterInstance) GetAggregatedTimesheetsMap(opts specs.TimesheetRese
 			if to != "" && dUnix > toDate.Unix() {
 				continue
 			}
-			if len(users) > 0 && !matchEntry(rt.User, users) {
+			if len(users) > 0 && !tools.MatchEntry(rt.User, users) {
 				continue
 			}
-			if len(tasks) > 0 && !regexEntry(rt.Task, tasks) {
+			if len(tasks) > 0 && !tools.RegexEntry(rt.Task, tasks) {
 				continue
 			}
 
@@ -179,23 +179,4 @@ func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearc
 	}
 
 	return &ans, nil
-}
-
-func matchEntry(entry string, whitelist []string) bool {
-	for _, e := range whitelist {
-		if entry == e {
-			return true
-		}
-	}
-	return false
-}
-
-func regexEntry(entry string, listRegex []string) bool {
-	for _, e := range listRegex {
-		r := regexp.MustCompile(e)
-		if r != nil && r.MatchString(entry) {
-			return true
-		}
-	}
-	return false
 }

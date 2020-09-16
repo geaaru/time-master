@@ -23,6 +23,7 @@ package loader
 
 import (
 	specs "github.com/geaaru/time-master/pkg/specs"
+	tools "github.com/geaaru/time-master/pkg/tools"
 )
 
 func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs.Activity, error) {
@@ -30,7 +31,7 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 
 	for _, client := range *i.GetClients() {
 
-		if len(opts.Clients) > 0 && !regexEntry(client.GetName(), opts.Clients) {
+		if len(opts.Clients) > 0 && !tools.RegexEntry(client.GetName(), opts.Clients) {
 			continue
 		}
 
@@ -42,6 +43,12 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 				}
 			} else if !opts.ClosedActivity && activity.IsClosed() {
 				continue
+			}
+
+			if len(opts.ExcludeNames) > 0 {
+				if tools.RegexEntry(activity.Name, opts.ExcludeNames) {
+					continue
+				}
 			}
 
 			if len(opts.Labels) > 0 {
@@ -57,7 +64,7 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 						l := []string{label}
 
 						for k, v := range activity.Labels {
-							if regexEntry(k+"="+v, l) {
+							if tools.RegexEntry(k+"="+v, l) {
 								matchLabel = true
 								break
 							}
@@ -75,7 +82,7 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 
 					matchLabel := false
 					for _, flag := range activity.Labels {
-						if regexEntry(flag, opts.Labels) {
+						if tools.RegexEntry(flag, opts.Labels) {
 							matchLabel = true
 							break
 						}
@@ -93,7 +100,7 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 
 				matchFlags := false
 				for _, flag := range activity.Flags {
-					if regexEntry(flag, opts.Flags) {
+					if tools.RegexEntry(flag, opts.Flags) {
 						matchFlags = true
 						break
 					}
@@ -104,7 +111,7 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 			}
 
 			if len(opts.Names) > 0 {
-				if !regexEntry(activity.Name, opts.Names) {
+				if !tools.RegexEntry(activity.Name, opts.Names) {
 					continue
 				}
 			}

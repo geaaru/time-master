@@ -23,6 +23,7 @@ package loader
 
 import (
 	specs "github.com/geaaru/time-master/pkg/specs"
+	tools "github.com/geaaru/time-master/pkg/tools"
 )
 
 func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, error) {
@@ -30,7 +31,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 
 	for _, client := range *i.GetClients() {
 
-		if len(opts.Clients) > 0 && !regexEntry(client.GetName(), opts.Clients) {
+		if len(opts.Clients) > 0 && !tools.RegexEntry(client.GetName(), opts.Clients) {
 			continue
 		}
 
@@ -47,7 +48,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 			if len(opts.ActivityLabels) > 0 {
 				matchLabel := false
 				for k, v := range activity.Labels {
-					if regexEntry(k+"="+v, opts.ActivityLabels) {
+					if tools.RegexEntry(k+"="+v, opts.ActivityLabels) {
 						matchLabel = true
 						break
 					}
@@ -60,7 +61,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 			if len(opts.ActivityFlags) > 0 {
 				matchFlags := false
 				for _, flag := range activity.Flags {
-					if regexEntry(flag, opts.ActivityFlags) {
+					if tools.RegexEntry(flag, opts.ActivityFlags) {
 						matchFlags = true
 						break
 					}
@@ -85,7 +86,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 				if len(opts.Users) > 0 {
 					matchUser := false
 					for _, user := range task.AllocatedResource {
-						if matchEntry(user, opts.Users) {
+						if tools.MatchEntry(user, opts.Users) {
 							matchUser = true
 							break
 						}
@@ -100,7 +101,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 				if len(opts.Labels) > 0 {
 					matchLabel := false
 					for k, v := range task.Labels {
-						if regexEntry(k+"="+v, opts.Labels) {
+						if tools.RegexEntry(k+"="+v, opts.Labels) {
 							matchLabel = true
 							break
 						}
@@ -113,7 +114,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 				if len(opts.Flags) > 0 {
 					matchFlags := false
 					for _, flag := range task.Flags {
-						if regexEntry(flag, opts.Flags) {
+						if tools.RegexEntry(flag, opts.Flags) {
 							matchFlags = true
 							break
 						}
@@ -123,7 +124,7 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 					}
 				}
 
-				if len(opts.Tasks) > 0 && !regexEntry(task.Name, opts.Tasks) {
+				if len(opts.Tasks) > 0 && !tools.RegexEntry(task.Name, opts.Tasks) {
 					continue
 				}
 
