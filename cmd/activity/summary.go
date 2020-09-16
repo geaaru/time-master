@@ -56,6 +56,7 @@ func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity, scenari
 
 func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var activityNames []string
+	var excludeActivityNames []string
 	var activityLabels []string
 	var activityFlags []string
 	var clients []string
@@ -148,6 +149,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				Labels:             activityLabels,
 				Clients:            clients,
 				Names:              activityNames,
+				ExcludeNames:       excludeActivityNames,
 				LabelsInAnd:        labelsInAnd,
 			}
 
@@ -398,6 +400,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Filter for activities with specificied flag.")
 	flags.StringSliceVar(&activityLabels, "label", []string{},
 		"Filter for activities with specificied label.")
-
+	flags.StringSliceVar(&excludeActivityNames, "exclude-activity", []string{},
+		"Exclude activities from report.")
 	return cmd
 }
