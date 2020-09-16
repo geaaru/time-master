@@ -29,6 +29,7 @@ import (
 	log "github.com/geaaru/time-master/pkg/logger"
 	specs "github.com/geaaru/time-master/pkg/specs"
 	time "github.com/geaaru/time-master/pkg/time"
+	tools "github.com/geaaru/time-master/pkg/tools"
 )
 
 type TimeMasterScheduler interface {
@@ -54,12 +55,14 @@ type SchedulerOpts struct {
 
 	PreClients              []string
 	PreActivities           []string
+	PreExcludeActivities    []string
 	PreExcludeTaskFlags     []string
 	PreExcludeActivityFlags []string
 
 	// Post elaboration filter
 	PostClients              []string
 	PostActivities           []string
+	PostExcludeActivities    []string
 	PostExcludeTaskFlags     []string
 	PostExcludeActivityFlags []string
 }
@@ -126,6 +129,32 @@ func (s *DefaultScheduler) FilterPostElaboration(opts SchedulerOpts) error {
 			if found {
 				tasks = append(tasks, s.Scenario.Schedule[idx])
 			}
+
+		}
+
+		s.Scenario.Schedule = tasks
+
+	}
+
+	if len(opts.PostExcludeActivities) > 0 {
+
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			if len(opts.PostExcludeActivities) > 0 {
+				if tools.RegexEntry(ts.Activity.Name, opts.PostExcludeActivities) {
+					s.Logger.Debug(
+						fmt.Sprintf(
+							"Task %s of the activity %s excluded in post processing by prevision.",
+							ts.Task.Name, ts.Activity.Name,
+						),
+					)
+
+					continue
+				}
+			}
+			tasks = append(tasks, s.Scenario.Schedule[idx])
 
 		}
 
@@ -269,6 +298,30 @@ func (s *DefaultScheduler) FilterPreElaboration(opts SchedulerOpts) error {
 }
 
 func (s *DefaultScheduler) FilterPreElaborationFlags(opts SchedulerOpts) error {
+
+	if len(opts.PreExcludeActivities) > 0 {
+
+		tasks := []specs.TaskScheduled{}
+
+		for idx, ts := range s.Scenario.Schedule {
+
+			if len(opts.PreExcludeActivities) > 0 {
+				if tools.RegexEntry(ts.Activity.Name, opts.PreExcludeActivities) {
+					s.Logger.Debug(
+						fmt.Sprintf(
+							"Task %s of the activity %s excluded in pre processing by prevision.",
+							ts.Task.Name, ts.Activity.Name,
+						),
+					)
+					continue
+				}
+			}
+			tasks = append(tasks, s.Scenario.Schedule[idx])
+
+		}
+
+		s.Scenario.Schedule = tasks
+	}
 
 	if len(opts.PreExcludeTaskFlags) > 0 {
 		tasks := []specs.TaskScheduled{}
