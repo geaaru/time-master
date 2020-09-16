@@ -35,11 +35,13 @@ import (
 
 func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var preClients []string
+	var preExcActivities []string
 	var preActivities []string
 	var preTasksFlags []string
 	var preActivityFlags []string
 
 	var postClients []string
+	var postExcActivities []string
 	var postActivities []string
 	var postTasksFlags []string
 	var postActivityFlags []string
@@ -97,11 +99,13 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			opts := scheduler.SchedulerOpts{
 				PreClients:              preClients,
 				PreActivities:           preActivities,
+				PreExcludeActivities:    preExcActivities,
 				PreExcludeTaskFlags:     preTasksFlags,
 				PreExcludeActivityFlags: preActivityFlags,
 
 				PostClients:              postClients,
 				PostActivities:           postActivities,
+				PostExcludeActivities:    postExcActivities,
 				PostExcludeTaskFlags:     postTasksFlags,
 				PostExcludeActivityFlags: postActivityFlags,
 
@@ -183,6 +187,8 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Exclude task of the activity with specified name in pre elaboration.")
 	flags.StringSliceVar(&preActivities, "pre-activity",
 		[]string{}, "Filter for activities with specified name in pre elaboration.")
+	flags.StringSliceVar(&preExcActivities, "pre-exclude-activity",
+		[]string{}, "Exclude activities with specified name in pre elaboration.")
 
 	flags.StringSliceVar(&postClients, "post-client", []string{},
 		"Filter for client with specified name in post elaboration.")
@@ -192,6 +198,8 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Exclude task of the activity with specified name in post elaboration.")
 	flags.StringSliceVar(&preActivities, "post-activity",
 		[]string{}, "Filter for activities with specified name in post elaboration.")
+	flags.StringSliceVar(&postExcActivities, "post-exclude-activity",
+		[]string{}, "Exclude activities with specified name in post elaboration.")
 
 	return cmd
 }
