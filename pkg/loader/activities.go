@@ -51,6 +51,21 @@ func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs
 				}
 			}
 
+			if len(opts.ExcludeFlags) > 0 {
+				matchFlags := false
+				for _, flag := range activity.Flags {
+					if tools.RegexEntry(flag, opts.ExcludeFlags) {
+						matchFlags = true
+						break
+					}
+				}
+
+				if matchFlags {
+					continue
+				}
+
+			}
+
 			if len(opts.Labels) > 0 {
 				if len(activity.Labels) == 0 {
 					continue

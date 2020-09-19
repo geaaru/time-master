@@ -52,5 +52,6 @@ type ActivityResearch struct {
 	Clients            []string
 	Names              []string
 	ExcludeNames       []string
+	ExcludeFlags       []string
 	LabelsInAnd        bool
 }
