@@ -160,5 +160,17 @@ func (i *TimeMasterInstance) Validate(ignoreError bool) error {
 		}
 	}
 
+	// Validate resources.
+	for _, r := range i.Resources {
+		err := r.Validate()
+		if err != nil {
+			errMsg := fmt.Sprintf("Invalid status of the resource %s: %s", r.User, err.Error())
+			if !ignoreError {
+				return errors.New(errMsg)
+			}
+			i.Logger.Warning(errMsg)
+		}
+	}
+
 	return nil
 }
