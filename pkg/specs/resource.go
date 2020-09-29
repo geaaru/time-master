@@ -22,6 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package specs
 
 import (
+	"errors"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -45,4 +47,50 @@ func NewResource(user, name string) *Resource {
 		Sick:       []ResourceSick{},
 		Unemployed: []ResourceUnemployed{},
 	}
+}
+
+func (r *Resource) Validate() error {
+	if len(r.Holidays) > 0 {
+		for _, h := range r.Holidays {
+			if h.Period == nil {
+				return errors.New("Invalid holiday period entry")
+			}
+			if h.Period.StartPeriod == "" || h.Period.EndPeriod == "" {
+				return errors.New("Invalid holiday entry")
+			}
+		}
+	}
+
+	if len(r.Sick) > 0 {
+		for _, s := range r.Sick {
+			if s.Period == nil {
+				return errors.New("Invalid sick period entry")
+			}
+			if s.Period.StartPeriod == "" || s.Period.EndPeriod == "" {
+				return errors.New("Invalid sick entry")
+			}
+		}
+	}
+
+	if len(r.Unemployed) > 0 {
+		withOpenUnemployed := false
+		for _, u := range r.Unemployed {
+			if u.Period == nil {
+				return errors.New("Invalid unemployed period entry")
+			}
+
+			if u.Period.StartPeriod == "" {
+				return errors.New("Invalid unemployed entry with empty start period")
+			}
+
+			if u.Period.EndPeriod == "" {
+				if withOpenUnemployed {
+					return errors.New("Multiple unemployed entry without end period")
+				}
+				withOpenUnemployed = true
+			}
+		}
+	}
+
+	return nil
 }
