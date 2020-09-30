@@ -99,6 +99,11 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					os.Exit(1)
 				}
 				(imp.(*importer.TmJiraImporter)).ImportMapper(mapper)
+
+				jiraBefore202009, _ := cmd.Flags().GetBool("jira-before202009")
+				if jiraBefore202009 {
+					(imp.(*importer.TmJiraImporter)).SetBefore202009()
+				}
 			}
 
 			sourceFile := args[0]
@@ -141,6 +146,7 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.BoolP("split-for-user", "s", false,
 		"Create a timesheet file for every user.")
 	flags.StringP("jira-mapper-file", "j", "", "Import jira resource mapper file.")
+	flags.Bool("jira-before202009", false, "Import CSV created before 2020-09")
 	flags.Bool("stdout", false, "Print timesheets to stdout instead of write files.")
 
 	return cmd

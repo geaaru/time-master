@@ -40,6 +40,7 @@ type TmJiraImporter struct {
 	ResourceMapping map[string]string
 	IssueTaskMap    map[string]string
 	IgnoredIssueMap map[string]bool
+	Before202009    bool
 }
 
 type TmJiraMapper struct {
@@ -80,7 +81,12 @@ func NewTmJiraImporter(config *specs.TimeMasterConfig, tmDir, filePrefix string,
 		ResourceMapping: make(map[string]string, 0),
 		IssueTaskMap:    make(map[string]string, 0),
 		IgnoredIssueMap: make(map[string]bool, 0),
+		Before202009:    false,
 	}
+}
+
+func (i *TmJiraImporter) SetBefore202009() {
+	i.Before202009 = true
 }
 
 func (i *TmJiraImporter) ImportMapper(mapper *TmJiraMapper) {
@@ -132,9 +138,14 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 			continue
 		}
 
+		descIdx := 23
+		if i.Before202009 {
+			descIdx = 22
+		}
+
 		jiraRows = append(jiraRows, TmJiraCsvRow{
 			Issue:    row[0],
-			Descr:    strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(row[23], "\n", ""), "\r", "")),
+			Descr:    strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(row[descIdx], "\n", ""), "\r", "")),
 			Date:     row[3],
 			WorkTime: row[2],
 			User:     row[5],
