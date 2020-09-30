@@ -134,7 +134,7 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 
 		jiraRows = append(jiraRows, TmJiraCsvRow{
 			Issue:    row[0],
-			Descr:    strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(row[22], "\n", ""), "\r", "")),
+			Descr:    strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(row[23], "\n", ""), "\r", "")),
 			Date:     row[3],
 			WorkTime: row[2],
 			User:     row[5],
