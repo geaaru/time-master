@@ -23,6 +23,9 @@ package specs
 
 import (
 	"errors"
+	"fmt"
+
+	time "github.com/geaaru/time-master/pkg/time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -49,25 +52,121 @@ func NewResource(user, name string) *Resource {
 	}
 }
 
+func (r *Resource) AddHoliday(rh ResourceHolidays) {
+	r.Holidays = append(r.Holidays, rh)
+}
+
+func (r *Resource) AddSick(s ResourceSick) { r.Sick = append(r.Sick, s) }
+
+func (r *Resource) AddUnemployed(ru ResourceUnemployed) {
+	r.Unemployed = append(r.Unemployed, ru)
+}
+
+func (r *Resource) IsAvailable(workDate string) (bool, error) {
+	wTime, err := time.ParseTimestamp(workDate, true)
+	if err != nil {
+		return false, err
+	}
+
+	if len(r.Holidays) > 0 {
+		for _, h := range r.Holidays {
+
+			startTime, err := time.ParseTimestamp(h.Period.StartPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() < startTime.Unix() {
+				// POST: the date is before the holiday
+				continue
+			}
+
+			if wTime.Unix() == startTime.Unix() || h.Period.EndPeriod == "" {
+				return false, nil
+			}
+
+			endTime, err := time.ParseTimestamp(h.Period.EndPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() <= endTime.Unix() {
+				return false, nil
+			}
+		}
+	}
+
+	if len(r.Sick) > 0 {
+		for _, e := range r.Sick {
+			startTime, err := time.ParseTimestamp(e.Period.StartPeriod, true)
+			if err != nil {
+				return false, err
+			}
+			if wTime.Unix() < startTime.Unix() {
+				// POST: the date is before the holiday
+				continue
+			}
+
+			if wTime.Unix() == startTime.Unix() || e.Period.EndPeriod == "" {
+				return false, nil
+			}
+
+			endTime, err := time.ParseTimestamp(e.Period.EndPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() <= endTime.Unix() {
+				return false, nil
+			}
+		}
+	}
+
+	if len(r.Unemployed) > 0 {
+		for _, e := range r.Unemployed {
+			startTime, err := time.ParseTimestamp(e.Period.StartPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() < startTime.Unix() {
+				// POST: the date is before the holiday
+				continue
+			}
+
+			if wTime.Unix() == startTime.Unix() || e.Period.EndPeriod == "" {
+				return false, nil
+			}
+
+			endTime, err := time.ParseTimestamp(e.Period.EndPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() <= endTime.Unix() {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
+}
+
 func (r *Resource) Validate() error {
 	if len(r.Holidays) > 0 {
 		for _, h := range r.Holidays {
-			if h.Period == nil {
-				return errors.New("Invalid holiday period entry")
-			}
-			if h.Period.StartPeriod == "" || h.Period.EndPeriod == "" {
-				return errors.New("Invalid holiday entry")
+			err := r.validatePeriod(h.Period, "holiday period")
+			if err != nil {
+				return err
 			}
 		}
 	}
 
 	if len(r.Sick) > 0 {
 		for _, s := range r.Sick {
-			if s.Period == nil {
-				return errors.New("Invalid sick period entry")
-			}
-			if s.Period.StartPeriod == "" || s.Period.EndPeriod == "" {
-				return errors.New("Invalid sick entry")
+			err := r.validatePeriod(s.Period, "sick")
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -75,20 +174,45 @@ func (r *Resource) Validate() error {
 	if len(r.Unemployed) > 0 {
 		withOpenUnemployed := false
 		for _, u := range r.Unemployed {
-			if u.Period == nil {
-				return errors.New("Invalid unemployed period entry")
+			err := r.validatePeriod(u.Period, "unemployed")
+			if err != nil {
+				return err
 			}
-
-			if u.Period.StartPeriod == "" {
-				return errors.New("Invalid unemployed entry with empty start period")
-			}
-
 			if u.Period.EndPeriod == "" {
 				if withOpenUnemployed {
 					return errors.New("Multiple unemployed entry without end period")
 				}
 				withOpenUnemployed = true
 			}
+		}
+	}
+
+	return nil
+}
+
+func (r *Resource) validatePeriod(p *Period, note string) error {
+	if p == nil {
+		return errors.New("Invalid " + note + " entry")
+	}
+	if p.StartPeriod == "" || p.EndPeriod == "" {
+		return errors.New("Invalid " + note + " entry")
+	}
+
+	if p.StartPeriod != "" {
+		_, err := time.ParseTimestamp(p.StartPeriod, true)
+		if err != nil {
+			return errors.New(
+				fmt.Sprintf("Invalid date %s (%s) on resource %s: %s",
+					p.StartPeriod, note, r.User, err.Error()))
+		}
+	}
+
+	if p.EndPeriod != "" {
+		_, err := time.ParseTimestamp(p.StartPeriod, true)
+		if err != nil {
+			return errors.New(
+				fmt.Sprintf("Invalid date %s (%s) on resource %s: %s",
+					p.StartPeriod, note, r.User, err.Error()))
 		}
 	}
 

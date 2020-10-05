@@ -233,6 +233,19 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 					return errors.New("Error on retrieve resource map for user " + r)
 				}
 
+				// Check if the resource is available
+				available, err := rdm.Resource.IsAvailable(workDate)
+				if err != nil {
+					return errors.New("Error on check resource availability for user " +
+						r + ": " + err.Error())
+				}
+
+				if !available {
+					s.Logger.Debug(fmt.Sprintf(
+						"[%s] [%s] [%s] Resource not available.", workDate, r, t.Name))
+					continue
+				}
+
 				if _, present := rdm.Days[workDate]; present {
 
 					if rdm.Days[workDate] == 0 {

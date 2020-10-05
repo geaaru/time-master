@@ -79,7 +79,8 @@ type DefaultScheduler struct {
 }
 
 type ResourceDailyMap struct {
-	User string
+	User     string
+	Resource *specs.Resource
 	// Map with the time left for a specific day
 	Days map[string]int64
 }
@@ -94,10 +95,11 @@ func (s *DefaultScheduler) Init() error {
 }
 
 func (s *DefaultScheduler) initResourceMap() {
-	for _, r := range s.Resources {
+	for idx, r := range s.Resources {
 		s.ResourcesMap[r.User] = &ResourceDailyMap{
-			User: r.User,
-			Days: make(map[string]int64, 0),
+			User:     r.User,
+			Resource: &s.Resources[idx],
+			Days:     make(map[string]int64, 0),
 		}
 	}
 }
