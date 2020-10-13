@@ -128,11 +128,6 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 			r.Task.Task.Name + " without end period")
 	}
 
-	nowTime, err := time.ParseTimestamp(workDate, true)
-	if err != nil {
-		return err
-	}
-
 	// Get unix time of end period
 	endTaskTime, err := time.ParseTimestamp(r.Task.Task.Period.EndPeriod, true)
 	if err != nil {
@@ -148,6 +143,11 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 		if workTime.Unix() > endTaskTime.Unix() {
 			notCompleted = false
 			break
+		}
+
+		nowTime, err := time.ParseTimestamp(workDate, true)
+		if err != nil {
+			return err
 		}
 
 		// Get total seconds for this time
@@ -172,6 +172,19 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 				rdm, ok := (*r.Scheduler.GetResourcesMap())[resource]
 				if !ok {
 					return errors.New("Error on retrieve resource map for user " + resource)
+				}
+
+				// Check if the resource is available
+				available, err := rdm.Resource.IsAvailable(workDate)
+				if err != nil {
+					return errors.New("Error on check resource availability for user " +
+						resource + ": " + err.Error())
+				}
+
+				if !available {
+					r.Scheduler.GetLogger().Debug(fmt.Sprintf(
+						"[%s] [%s] [%s] Resource not available.", workDate, resource, r.Task.Task.Name))
+					continue
 				}
 
 				if _, present := rdm.Days[workDate]; present {
@@ -247,7 +260,8 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 
 				if weekNum1 != weekNum2 {
 					return errors.New(
-						"Too few resources for weekly task " + r.Task.Task.Name)
+						fmt.Sprintf("Too few resources for weekly task %s for week %d",
+							r.Task.Task.Name, weekNum1))
 				}
 			} else if r.Task.Task.Recursive.Mode == "monthly" && leftTime > 0 {
 				if nowTime.Month() != wTime.Month() {
