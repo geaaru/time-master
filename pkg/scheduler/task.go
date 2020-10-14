@@ -145,6 +145,19 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 			break
 		}
 
+		// Check date is excluded
+		available, err := r.Task.Task.Recursive.IsAvailable(workDate)
+		if err != nil {
+			return err
+		}
+
+		if !available {
+			r.Scheduler.GetLogger().Debug(fmt.Sprintf(
+				"[%s] [%s] Date excluded.", workDate, r.Task.Task.Name))
+			notCompleted = false
+			break
+		}
+
 		nowTime, err := time.ParseTimestamp(workDate, true)
 		if err != nil {
 			return err

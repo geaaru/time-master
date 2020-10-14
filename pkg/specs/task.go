@@ -209,6 +209,55 @@ func (t *Task) Validate(ignoreError bool) error {
 		fmt.Println("Warning: Invalid task name " + t.Name)
 	}
 
+	if t.Recursive.Enable && t.Recursive.Exclude != nil && len(t.Recursive.Exclude) > 0 {
+		for _, p := range t.Recursive.Exclude {
+
+			if p.StartPeriod == "" {
+				if !ignoreError {
+					return errors.New(
+						fmt.Sprintf("Found recursive excluded period without start_period on task %s",
+							t.Name))
+				}
+				fmt.Println(fmt.Sprintf("Found recursive excluded period without start_period on task %s",
+					t.Name))
+			}
+
+			_, err := time.ParseTimestamp(p.StartPeriod, true)
+			if err != nil {
+				str := fmt.Sprintf(
+					"Invalid date %s on recursive excluded period (start_period) for task %s: %s",
+					p.StartPeriod, t.Name, err.Error())
+
+				if !ignoreError {
+					return errors.New(str)
+				}
+				fmt.Println(str)
+			}
+
+			if p.EndPeriod == "" {
+				if !ignoreError {
+					return errors.New(
+						fmt.Sprintf("Found recursive excluded period without end_period on task %s",
+							t.Name))
+				}
+				fmt.Println(fmt.Sprintf("Found recursive excluded period without end_period on task %s",
+					t.Name))
+			}
+
+			_, err = time.ParseTimestamp(p.EndPeriod, true)
+			if err != nil {
+				str := fmt.Sprintf(
+					"Invalid date %s on recursive excluded period (end_period) for task %s: %s",
+					p.StartPeriod, t.Name, err.Error())
+
+				if !ignoreError {
+					return errors.New(str)
+				}
+				fmt.Println(str)
+			}
+		}
+	}
+
 	if len(t.Tasks) > 0 {
 		for _, st := range t.Tasks {
 			err := st.Validate(ignoreError)
@@ -252,4 +301,42 @@ func (ts *TaskRecursiveOpts) GetSeconds(workHours int) (int64, error) {
 	}
 
 	return ans, err
+}
+
+func (ts *TaskRecursiveOpts) IsAvailable(workDate string) (bool, error) {
+	wTime, err := time.ParseTimestamp(workDate, true)
+	if err != nil {
+		return false, err
+	}
+
+	if len(ts.Exclude) > 0 {
+
+		for _, p := range ts.Exclude {
+
+			startTime, err := time.ParseTimestamp(p.StartPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() < startTime.Unix() {
+				// POST: the date is before the holiday
+				continue
+			}
+
+			if wTime.Unix() == startTime.Unix() {
+				return false, nil
+			}
+
+			endTime, err := time.ParseTimestamp(p.EndPeriod, true)
+			if err != nil {
+				return false, err
+			}
+
+			if wTime.Unix() <= endTime.Unix() {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }

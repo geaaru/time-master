@@ -116,6 +116,8 @@ type TaskRecursiveOpts struct {
 	// Type of recursion: weekly (default) | monthly | daily
 	Mode     string `json:"mode" yaml:"mode"`
 	Duration string `json:"duration" yaml:"duration"`
+
+	Exclude []Period `json:"exclude" yaml:"exclude"`
 }
 
 type Resource struct {
