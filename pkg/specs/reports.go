@@ -36,3 +36,25 @@ type ActivityReport struct {
 	Effort   int64 `json:"effort_sec,omitempty" yaml:"effort_sec,omitempty"`
 	WorkSecs int64 `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
 }
+
+type TimesheetReport struct {
+	User      string `json:"user,omitempty" yaml:"user,omitempty"`
+	Date      string `json:"date,omitempty" yaml:"date,omitempty"`
+	Task      string `json:"task,omitempty" yaml:"task,omitempty"`
+	Activity  string `json:"activity,omitempty" yaml:"activity,omitempty"`
+	Effort    string `json:"effort,omitempty" yaml:"effort,omitempty"`
+	EffortSec int64  `json:"effort_sec,omitempty" yaml:"effort_sec,omitempty"`
+}
+
+type TimesheetReportPerUser struct {
+	User         string                 `json:"user,omitempty" yaml:"user,omitempty"`
+	Events       []TimesheetReportEvent `json:"events,omitempty", yaml:"events,omitempty"`
+	TotEffortSec int64                  `json:"tot_effort_sec,omitempty" yaml:"tot_effort_sec,omitempty"`
+	TotEffort    string                 `json:"tot_effort,omitempty" yaml:"tot_effort,omitempty"`
+}
+
+type TimesheetReportEvent struct {
+	Date      string `json:"date" yaml:"date"`
+	Effort    string `json:"effort" yaml:"effort"`
+	EffortSec int64  `json:"effort_sec" yaml:"effort_sec"`
+}

@@ -22,6 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd_timesheet
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -34,15 +35,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func prepareTableByUser(rtaList *[]specs.ResourceTsAggregated) error {
+func prepareTableByUser(rtaList *[]specs.ResourceTsAggregated, jsonOutput bool) error {
+	var table *tablewriter.Table
 
 	totUserEffort := make(map[string]int64, 0)
 	totDateEffort := make(map[string]int64, 0)
-
 	users := []string{}
 	dates := []string{}
 	mapDates := make(map[string]bool, 0)
 	mapUsers := make(map[string]map[string]string, 0)
+	jsonData := []specs.TimesheetReportPerUser{}
 
 	for _, rta := range *rtaList {
 		mapDates[rta.Period.StartPeriod] = true
@@ -66,13 +68,6 @@ func prepareTableByUser(rtaList *[]specs.ResourceTsAggregated) error {
 	headers := []string{"User"}
 	footers := []string{""}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetBorders(tablewriter.Border{
-		Left:   true,
-		Top:    true,
-		Right:  true,
-		Bottom: true})
-
 	for user, _ := range mapUsers {
 		users = append(users, user)
 	}
@@ -84,121 +79,214 @@ func prepareTableByUser(rtaList *[]specs.ResourceTsAggregated) error {
 	sort.Strings(users)
 	sort.Strings(dates)
 
-	// Prepare headers
-	for _, date := range dates {
-		headers = append(headers, date)
+	if !jsonOutput {
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetBorders(tablewriter.Border{
+			Left:   true,
+			Top:    true,
+			Right:  true,
+			Bottom: true})
+
+		// Prepare headers
+		for _, date := range dates {
+			headers = append(headers, date)
+		}
+		headers = append(headers, "Total Effort")
 	}
-	headers = append(headers, "Total Effort")
 
 	for _, user := range users {
 
-		row := []string{user}
+		if jsonOutput {
 
-		for _, date := range dates {
-
-			if val, ok := mapUsers[user][date]; ok {
-				row = append(row, val)
-			} else {
-				row = append(row, "")
+			row := specs.TimesheetReportPerUser{
+				User:         user,
+				Events:       []specs.TimesheetReportEvent{},
+				TotEffortSec: 0,
+				TotEffort:    "",
 			}
 
+			for _, date := range dates {
+
+				var err error
+				event := specs.TimesheetReportEvent{
+					Date: date,
+				}
+
+				if val, ok := mapUsers[user][date]; ok {
+					event.Effort = val
+					event.EffortSec, err = time.ParseDuration(val, 8)
+					if err != nil {
+						return fmt.Errorf("Error on convert duration %s: %s",
+							val, err.Error())
+					}
+				} else {
+					event.Effort = ""
+				}
+
+				row.Events = append(row.Events, event)
+			}
+
+			duration, err := time.Seconds2Duration(totUserEffort[user])
+			if err != nil {
+				return err
+			}
+
+			row.TotEffortSec = totUserEffort[user]
+			row.TotEffort = duration
+
+			jsonData = append(jsonData, row)
+
+		} else {
+			row := []string{user}
+
+			for _, date := range dates {
+
+				if val, ok := mapUsers[user][date]; ok {
+					row = append(row, val)
+				} else {
+					row = append(row, "")
+				}
+
+			}
+
+			duration, err := time.Seconds2Duration(totUserEffort[user])
+			if err != nil {
+				return err
+			}
+
+			row = append(row, duration)
+			table.Append(row)
 		}
-
-		duration, err := time.Seconds2Duration(totUserEffort[user])
-		if err != nil {
-			return err
-		}
-
-		row = append(row, duration)
-
-		table.Append(row)
 	}
 
-	for _, date := range dates {
-		duration, err := time.Seconds2Duration(totDateEffort[date])
+	if jsonOutput {
+
+		data, err := json.Marshal(jsonData)
 		if err != nil {
-			return err
+			return fmt.Errorf("Error on convert data to json: %s", err.Error())
 		}
-		footers = append(footers, duration)
+		fmt.Println(string(data))
+
+	} else {
+		for _, date := range dates {
+			duration, err := time.Seconds2Duration(totDateEffort[date])
+			if err != nil {
+				return err
+			}
+			footers = append(footers, duration)
+		}
+
+		// Add last column with total
+		footers = append(footers, "")
+
+		table.SetHeader(headers)
+		table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
+		table.SetFooter(footers)
+		table.Render()
 	}
-
-	// Add last column with total
-	footers = append(footers, "")
-
-	table.SetHeader(headers)
-	table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
-	table.SetFooter(footers)
-	table.Render()
 
 	return nil
 }
 
 func prepareNormalTable(dates *[]string, rtaMap *map[string]specs.ResourceTsAggregated,
-	researchOpts *specs.TimesheetResearch) error {
+	researchOpts *specs.TimesheetResearch, jsonOutput bool) error {
 
 	sort.Strings(*dates)
 
 	var totEffort int64 = 0
 	var dateStr string
+	var table *tablewriter.Table
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetBorders(tablewriter.Border{
-		Left:   true,
-		Top:    true,
-		Right:  true,
-		Bottom: true})
+	jsonData := []specs.TimesheetReport{}
 
-	headers := []string{}
 	footer := []string{"Total"}
 
-	if !researchOpts.IgnoreTime {
-		if researchOpts.Monthly {
-			dateStr = "Month"
-		} else {
-			dateStr = "Date"
-		}
-		headers = append(headers, dateStr)
-	}
-	if researchOpts.ByUser {
-		headers = append(headers, "User")
+	if !jsonOutput {
+
+		table = tablewriter.NewWriter(os.Stdout)
+		table.SetBorders(tablewriter.Border{
+			Left:   true,
+			Top:    true,
+			Right:  true,
+			Bottom: true})
+
+		headers := []string{}
+
 		if !researchOpts.IgnoreTime {
-			footer = append(footer, "")
+			if researchOpts.Monthly {
+				dateStr = "Month"
+			} else {
+				dateStr = "Date"
+			}
+			headers = append(headers, dateStr)
 		}
-	}
+		if researchOpts.ByUser {
+			headers = append(headers, "User")
+			if !researchOpts.IgnoreTime {
+				footer = append(footer, "")
+			}
+		}
 
-	if researchOpts.ByTask {
-		headers = append(headers, "Task")
-		if (researchOpts.IgnoreTime && researchOpts.ByUser) || !researchOpts.IgnoreTime {
-			footer = append(footer, "")
+		if researchOpts.ByTask {
+			headers = append(headers, "Task")
+			if (researchOpts.IgnoreTime && researchOpts.ByUser) || !researchOpts.IgnoreTime {
+				footer = append(footer, "")
+			}
+		} else if researchOpts.ByActivity {
+			headers = append(headers, "Activity")
+			if (researchOpts.IgnoreTime && researchOpts.ByUser) || !researchOpts.IgnoreTime {
+				footer = append(footer, "")
+			}
 		}
-	} else if researchOpts.ByActivity {
-		headers = append(headers, "Activity")
-		if (researchOpts.IgnoreTime && researchOpts.ByUser) || !researchOpts.IgnoreTime {
-			footer = append(footer, "")
-		}
-	}
 
-	headers = append(headers, "Effort")
-	table.SetHeader(headers)
-	table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
+		headers = append(headers, "Effort")
+		table.SetHeader(headers)
+		table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
+
+	}
 
 	for _, d := range *dates {
 		rta := (*rtaMap)[d]
 		totEffort += rta.GetSeconds()
 
-		row := []string{}
+		if jsonOutput {
 
-		if !researchOpts.IgnoreTime {
-			row = append(row, rta.Period.StartPeriod)
+			row := specs.TimesheetReport{
+				Effort:    rta.GetDuration(),
+				EffortSec: rta.GetSeconds(),
+			}
+
+			if !researchOpts.IgnoreTime {
+				row.Date = rta.Period.StartPeriod
+			}
+			if researchOpts.ByUser {
+				row.User = rta.User
+			}
+			if researchOpts.ByTask {
+				row.Task = rta.Task
+			}
+
+			if researchOpts.ByActivity {
+				row.Activity = rta.Task
+			}
+
+			jsonData = append(jsonData, row)
+
+		} else {
+			row := []string{}
+
+			if !researchOpts.IgnoreTime {
+				row = append(row, rta.Period.StartPeriod)
+			}
+			if researchOpts.ByUser {
+				row = append(row, rta.User)
+			}
+			if researchOpts.ByTask || researchOpts.ByActivity {
+				row = append(row, rta.Task)
+			}
+			row = append(row, rta.GetDuration())
+			table.Append(row)
 		}
-		if researchOpts.ByUser {
-			row = append(row, rta.User)
-		}
-		if researchOpts.ByTask || researchOpts.ByActivity {
-			row = append(row, rta.Task)
-		}
-		row = append(row, rta.GetDuration())
-		table.Append(row)
 	}
 
 	duration, err := time.Seconds2Duration(totEffort)
@@ -206,9 +294,18 @@ func prepareNormalTable(dates *[]string, rtaMap *map[string]specs.ResourceTsAggr
 		return err
 	}
 
-	footer = append(footer, duration)
-	table.SetFooter(footer)
-	table.Render()
+	if jsonOutput {
+		data, err := json.Marshal(jsonData)
+		if err != nil {
+			return fmt.Errorf("Error on convert data to json: %s", err.Error())
+		}
+		fmt.Println(string(data))
+
+	} else {
+		footer = append(footer, duration)
+		table.SetFooter(footer)
+		table.Render()
+	}
 
 	return nil
 }
@@ -248,6 +345,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			to, _ := cmd.Flags().GetString("to")
 			scenario, _ := cmd.Flags().GetString("scenario")
 			dataByUser, _ := cmd.Flags().GetBool("data-by-user")
+			jsonOutput, _ := cmd.Flags().GetBool("json")
 
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
@@ -288,7 +386,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			}
 
 			if dataByUser {
-				err = prepareTableByUser(rtaList)
+				err = prepareTableByUser(rtaList, jsonOutput)
 				if err != nil {
 					fmt.Println("Error: " + err.Error())
 					os.Exit(1)
@@ -312,7 +410,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					rtaMap[key] = rta
 				}
 
-				err = prepareNormalTable(&dates, &rtaMap, &researchOpts)
+				err = prepareNormalTable(&dates, &rtaMap, &researchOpts, jsonOutput)
 				if err != nil {
 					fmt.Println("Error: " + err.Error())
 					os.Exit(1)
@@ -323,6 +421,7 @@ func NewShowCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.BoolP("monthly", "m", false, "Timesheets aggregated for month instead of day.")
+	flags.Bool("json", false, "Print output in JSON format.")
 	flags.Bool("by-tasks", false, "Timesheets aggregated for tasks.")
 	flags.Bool("by-users", false, "Timesheets aggregated for users.")
 	flags.Bool("data-by-user", false, "Show data per user horizontally.")
