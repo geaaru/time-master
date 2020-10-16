@@ -23,6 +23,7 @@ package cmd_task
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -51,6 +52,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			closed, _ := cmd.Flags().GetBool("closed")
 			withMilestone, _ := cmd.Flags().GetBool("with-milestone")
 			onlyMilestone, _ := cmd.Flags().GetBool("only-milestone")
+			jsonOutput, _ := cmd.Flags().GetBool("json")
+			jsonTask, _ := cmd.Flags().GetBool("json-task")
+			csvOutput, _ := cmd.Flags().GetBool("csv")
 
 			if onlyClosed && closed {
 				fmt.Println("Both option --closed and --only-closed not admitted.")
@@ -59,6 +63,16 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 			if onlyMilestone && withMilestone {
 				fmt.Println("Both option --milestone and --only-milestone not admitted.")
+				os.Exit(1)
+			}
+
+			if jsonOutput && csvOutput {
+				fmt.Println("Both option --csv and --json not admitted.")
+				os.Exit(1)
+			}
+
+			if jsonTask && !jsonOutput {
+				fmt.Println("Use --json-task only with --json")
 				os.Exit(1)
 			}
 		},
@@ -79,6 +93,8 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			withMilestone, _ := cmd.Flags().GetBool("with-milestone")
 			onlyMilestone, _ := cmd.Flags().GetBool("only-milestone")
 			csvOutput, _ := cmd.Flags().GetBool("csv")
+			jsonOutput, _ := cmd.Flags().GetBool("json")
+			jsonTask, _ := cmd.Flags().GetBool("json-task")
 			showWorkHours, _ := cmd.Flags().GetBool("show-work-hours")
 
 			opts := specs.TaskResearch{
@@ -113,7 +129,59 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				os.Exit(1)
 			}
 
-			if csvOutput {
+			if jsonOutput {
+
+				jsonData := []specs.TaskReport{}
+
+				for _, t := range res {
+
+					tr := specs.TaskReport{
+						Name:        t.Name,
+						Description: t.Description,
+					}
+
+					if jsonTask {
+						tr.Task = t.Clone(false)
+					}
+
+					durationEffort := ""
+					effort := int64(0)
+					if t.GetEffort() != "" {
+						effort, err = time.ParseDuration(t.GetEffort(), config.GetWork().WorkHours)
+						if err != nil {
+							fmt.Println(err.Error())
+							os.Exit(1)
+						}
+
+						durationEffort, err = time.Seconds2Duration(effort)
+						if err != nil {
+							fmt.Println(err.Error())
+							os.Exit(1)
+						}
+					}
+
+					tr.Effort = durationEffort
+					tr.EffortSec = effort
+
+					if showWorkHours {
+						rta, _ := rtaMap[t.Name]
+						if rta != nil {
+							tr.Work = rta.GetDuration()
+							tr.WorkSec = rta.GetSeconds()
+						}
+					}
+
+					jsonData = append(jsonData, tr)
+				}
+
+				data, err := json.Marshal(jsonData)
+				if err != nil {
+					fmt.Println(fmt.Errorf("Error on convert data to json: %s", err.Error()))
+					os.Exit(1)
+				}
+				fmt.Println(string(data))
+
+			} else if csvOutput {
 
 				records := make([][]string, len(res)+1)
 				if showWorkHours {
@@ -226,6 +294,8 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.Bool("csv", false, "Print output in CSV format")
+	flags.Bool("json", false, "Print output in JSON format")
+	flags.Bool("json-task", false, "Add also task object for every entry.")
 	flags.Bool("closed", false, "Include tasks of closed activities.")
 	flags.Bool("only-closed", false, "Show only tasks of closed activities.")
 	flags.Bool("with-effort", false, "Show only tasks with effort")

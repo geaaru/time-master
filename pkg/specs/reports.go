@@ -31,7 +31,7 @@ type ActivityReport struct {
 	Work       string `json:"work,omitempty" yaml:"work,omitempty"`
 	WorkPerc   string `json:"work_perc,omitempty" yaml:"work_perc,omitempty"`
 	Duration   string `json:"duration,omitempty" yaml:"duration,omitempty"`
-	ProfitPerc string `json:"profic_perc,omitempty" yaml:"profic_perc,omitempty"`
+	ProfitPerc string `json:"profit_perc,omitempty" yaml:"profit_perc,omitempty"`
 
 	Effort   int64 `json:"effort_sec,omitempty" yaml:"effort_sec,omitempty"`
 	WorkSecs int64 `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
@@ -57,4 +57,15 @@ type TimesheetReportEvent struct {
 	Date      string `json:"date" yaml:"date"`
 	Effort    string `json:"effort" yaml:"effort"`
 	EffortSec int64  `json:"effort_sec" yaml:"effort_sec"`
+}
+
+type TaskReport struct {
+	*Task `json:"task,omitempty" yaml:"task,omitempty"`
+
+	Name        string `json:"name" yaml:"name"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Work        string `json:"work,omitempty" yaml:"work,omitempty"`
+	WorkSec     int64  `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
+	Effort      string `json:"effort" yaml:"effort"`
+	EffortSec   int64  `json:"effort_sec" yaml:"effort_sec"`
 }
