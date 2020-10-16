@@ -77,7 +77,19 @@ func (a *ActivityReport) CalculateProfitPerc() {
 	}
 }
 
+func (a *ActivityReport) CalculateDuration() error {
+	d, err := time.Seconds2Duration(a.Effort)
+	if err != nil {
+		return err
+	}
+
+	a.Duration = d
+	return nil
+}
+
 func (a *ActivityReport) GetDuration() string {
-	ans, _ := time.Seconds2Duration(a.Effort)
-	return ans
+	if a.Duration == "" && a.Effort > 0 {
+		a.CalculateDuration()
+	}
+	return a.Duration
 }
