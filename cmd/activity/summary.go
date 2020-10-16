@@ -201,12 +201,6 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					os.Exit(1)
 				}
 
-				if effort > 0 {
-					duration, err = time.Seconds2Duration(effort)
-				} else {
-					duration = ""
-				}
-
 				// Retrieve work time
 				work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
 				if err != nil {
@@ -238,6 +232,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					aReport.SetProfit(profit)
 					aReport.SetWork(work)
 					aReport.CalculateProfitPerc()
+					aReport.CalculateDuration()
 				} else {
 					// Reset effort/secs
 					aReport.SetEffort(0)
