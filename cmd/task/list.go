@@ -95,6 +95,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			csvOutput, _ := cmd.Flags().GetBool("csv")
 			jsonOutput, _ := cmd.Flags().GetBool("json")
 			jsonTask, _ := cmd.Flags().GetBool("json-task")
+			minimal, _ := cmd.Flags().GetBool("minimal")
 			showWorkHours, _ := cmd.Flags().GetBool("show-work-hours")
 
 			opts := specs.TaskResearch{
@@ -141,27 +142,33 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					}
 
 					if jsonTask {
-						tr.Task = t.Clone(false)
-					}
-
-					durationEffort := ""
-					effort := int64(0)
-					if t.GetEffort() != "" {
-						effort, err = time.ParseDuration(t.GetEffort(), config.GetWork().WorkHours)
-						if err != nil {
-							fmt.Println(err.Error())
-							os.Exit(1)
-						}
-
-						durationEffort, err = time.Seconds2Duration(effort)
-						if err != nil {
-							fmt.Println(err.Error())
-							os.Exit(1)
+						if minimal {
+							tr.Task = t.Clone(true)
+						} else {
+							tr.Task = t.Clone(false)
 						}
 					}
 
-					tr.Effort = durationEffort
-					tr.EffortSec = effort
+					if !minimal {
+						durationEffort := ""
+						effort := int64(0)
+						if t.GetEffort() != "" {
+							effort, err = time.ParseDuration(t.GetEffort(), config.GetWork().WorkHours)
+							if err != nil {
+								fmt.Println(err.Error())
+								os.Exit(1)
+							}
+
+							durationEffort, err = time.Seconds2Duration(effort)
+							if err != nil {
+								fmt.Println(err.Error())
+								os.Exit(1)
+							}
+						}
+
+						tr.Effort = durationEffort
+						tr.EffortSec = effort
+					}
 
 					if showWorkHours {
 						rta, _ := rtaMap[t.Name]
@@ -184,13 +191,20 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			} else if csvOutput {
 
 				records := make([][]string, len(res)+1)
+				records[0] = []string{"Task", "Description"}
 				if showWorkHours {
-					records[0] = []string{"Task", "Description", "Work"}
-				} else {
-					records[0] = []string{"Task", "Description"}
+					records[0] = append(records[0], "Work")
+				}
+
+				if !minimal {
+					records[0] = append(records[0], "Effort")
 				}
 
 				for idx, t := range res {
+
+					records[idx+1] = []string{
+						t.Name, t.Description,
+					}
 
 					if showWorkHours {
 						rta, _ := rtaMap[t.Name]
@@ -199,13 +213,28 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 							work = rta.GetDuration()
 						}
 
-						records[idx+1] = []string{
-							t.Name, t.Description, work,
+						records[idx+1] = append(records[idx+1], work)
+					}
+
+					if !minimal {
+						if t.GetEffort() != "" {
+							effort, err := time.ParseDuration(t.GetEffort(), config.GetWork().WorkHours)
+							if err != nil {
+								fmt.Println(err.Error())
+								os.Exit(1)
+							}
+
+							durationEffort, err := time.Seconds2Duration(effort)
+							if err != nil {
+								fmt.Println(err.Error())
+								os.Exit(1)
+							}
+
+							records[idx+1] = append(records[idx+1], durationEffort)
+						} else {
+							records[idx+1] = append(records[idx+1], "")
 						}
-					} else {
-						records[idx+1] = []string{
-							t.Name, t.Description,
-						}
+
 					}
 
 				}
@@ -232,11 +261,15 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					Top:    true,
 					Right:  true,
 					Bottom: true})
+				headers := []string{"Task", "Description"}
+
 				if showWorkHours {
-					table.SetHeader([]string{"Task", "Description", "Work", "Effort"})
-				} else {
-					table.SetHeader([]string{"Task", "Description", "Effort"})
+					headers = append(headers, "Work")
 				}
+				if !minimal {
+					headers = append(headers, "Effort")
+				}
+				table.SetHeader(headers)
 				table.SetFooterAlignment(tablewriter.ALIGN_LEFT)
 				table.SetColMinWidth(1, 60)
 				table.SetColWidth(100)
@@ -271,7 +304,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						}
 						row = append(row, work)
 					}
-					row = append(row, durationEffort)
+					if !minimal {
+						row = append(row, durationEffort)
+					}
 
 					table.Append(row)
 					totEffort += effort
@@ -284,7 +319,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				if showWorkHours {
 					footer = append(footer, durationWork)
 				}
-				footer = append(footer, duration)
+				if !minimal {
+					footer = append(footer, duration)
+				}
 
 				table.SetFooter(footer)
 				table.Render()
@@ -302,6 +339,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.Bool("show-work-hours", false, "Show also worked hours")
 	flags.Bool("with-milestone", false, "Include tasks of milestone")
 	flags.Bool("only-milestone", false, "Show only milestone tasks")
+	flags.Bool("minimal", false, "Show only minimal informations.")
 	flags.StringSliceVarP(&tasks, "task", "t", []string{},
 		"Filter for tasks with regex string.")
 	flags.StringSliceVarP(&users, "user", "u", []string{},
