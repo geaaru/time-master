@@ -120,14 +120,7 @@ func (a *Activity) GetAllTasksList() []Task {
 
 	if len(a.Tasks) > 0 {
 		for _, t := range a.Tasks {
-			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name, []string{})...)
-		}
-	}
-
-	// Ensure that task are all completed for closed activity
-	if a.Closed {
-		for idx, _ := range ans {
-			ans[idx].Completed = true
+			ans = append(ans, t.GetAllTasksAndSubTasksList(a.Name, []string{}, a.Closed)...)
 		}
 	}
 
@@ -151,6 +144,13 @@ func (a *Activity) HasLabelKey(key string) bool {
 		}
 	}
 	return false
+}
+
+func (a *Activity) GetLabelValue(key, dft string) string {
+	if a.HasLabelKey(key) {
+		return a.Labels[key]
+	}
+	return dft
 }
 
 func (a *Activity) InitDefaultPriority(prio int) {

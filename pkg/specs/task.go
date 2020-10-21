@@ -125,7 +125,7 @@ func (t *Task) IsCompleted() bool {
 	return t.Completed
 }
 
-func (t *Task) GetAllTasksAndSubTasksList(fatherName string, fatherResources []string) []Task {
+func (t *Task) GetAllTasksAndSubTasksList(fatherName string, fatherResources []string, fatherIsCompleted bool) []Task {
 	var fullName string
 	ans := []Task{*t}
 
@@ -143,8 +143,12 @@ func (t *Task) GetAllTasksAndSubTasksList(fatherName string, fatherResources []s
 		ans[0].AllocatedResource = fatherResources
 	}
 
+	if fatherIsCompleted {
+		ans[0].Completed = true
+	}
+
 	for _, st := range t.Tasks {
-		ans = append(ans, st.GetAllTasksAndSubTasksList(fullName, ans[0].AllocatedResource)...)
+		ans = append(ans, st.GetAllTasksAndSubTasksList(fullName, ans[0].AllocatedResource, ans[0].Completed)...)
 	}
 
 	return ans
