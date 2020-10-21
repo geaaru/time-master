@@ -540,8 +540,12 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 					}
 				}
 
-				st.Period.StartTime = minTime
-				st.Period.EndTime = maxTime
+				if minTime > 0 {
+					st.Period.StartTime = minTime
+				}
+				if maxTime > 0 {
+					st.Period.EndTime = maxTime
+				}
 
 				if minTime > 0 {
 					// TODO: handle onlyDate correctly
