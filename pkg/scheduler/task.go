@@ -154,8 +154,12 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 		if !available {
 			r.Scheduler.GetLogger().Debug(fmt.Sprintf(
 				"[%s] [%s] Date excluded.", workDate, r.Task.Task.Name))
-			notCompleted = false
-			break
+			// For monthly/weekly
+			workDate, err = r.self.GetNextDay(workDate)
+			if err != nil {
+				return err
+			}
+			continue
 		}
 
 		nowTime, err := time.ParseTimestamp(workDate, true)
