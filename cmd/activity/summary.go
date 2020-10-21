@@ -61,6 +61,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var activityLabels []string
 	var activityFlags []string
 	var clients []string
+	var labelsColumn []string
 
 	var cmd = &cobra.Command{
 		Use:   "summary [<client-name> [<activity-name>]]",
@@ -272,6 +273,12 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					}
 				}
 
+				if len(labelsColumn) > 0 {
+					for _, l := range labelsColumn {
+						headers = append(headers, l)
+					}
+				}
+
 				if !csvOutput {
 
 					table = tablewriter.NewWriter(os.Stdout)
@@ -305,6 +312,12 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 								fmt.Sprintf("%02.02f", totProfit),
 								fmt.Sprintf("%s", profit_perc),
 							}...)
+						}
+					}
+
+					if len(labelsColumn) > 0 {
+						for _, _ = range labelsColumn {
+							footers = append(footers, "")
 						}
 					}
 
@@ -342,6 +355,12 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 								row = append(row, "0")
 							}
 							row = append(row, fmt.Sprintf("%s", activity.ProfitPerc))
+						}
+					}
+
+					if len(labelsColumn) > 0 {
+						for _, l := range labelsColumn {
+							row = append(row, activity.GetLabelValue(l, ""))
 						}
 					}
 
@@ -390,6 +409,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.String("scenario", "", "Specify path of the scenario prevision to load.")
 
 	flags.StringSliceVar(&clients, "client", []string{}, "Filter for client with specified name.")
+	flags.StringSliceVar(&labelsColumn, "label-column", []string{}, "Add label value to output table/CSV")
 	flags.StringSliceVarP(&activityNames, "activity", "a",
 		[]string{}, "Filter for activities with specified name.")
 
