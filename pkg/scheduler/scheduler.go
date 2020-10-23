@@ -448,7 +448,7 @@ func (s *DefaultScheduler) initializeTasks() {
 
 }
 
-func (s *DefaultScheduler) elaborateTimesheets(withPlan bool) error {
+func (s *DefaultScheduler) elaborateTimesheets(withPlan bool, opts SchedulerOpts) error {
 
 	// 1. Elaborate timesheet and calculate start / end of the task with effort.
 	for _, st := range s.taskMap {
@@ -460,7 +460,7 @@ func (s *DefaultScheduler) elaborateTimesheets(withPlan bool) error {
 	}
 
 	// 2.Elaborate father tasks and milestone of completed tasks
-	err := s.elaborateFatherTasksAndMilestone(withPlan)
+	err := s.elaborateFatherTasksAndMilestone(withPlan, opts)
 	if err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func (s *DefaultScheduler) elaborateTimesheets(withPlan bool) error {
 	return nil
 }
 
-func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error {
+func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool, opts SchedulerOpts) error {
 	var err error
 
 	// Create a list of milestone tasks for final elaboration
@@ -524,6 +524,10 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool) error
 					// Retrieve task scheduled of the childer
 					cst, ok := s.taskMap[st.Task.Name+"."+task.Name]
 					if !ok {
+						if s.isExcludedTask(task, opts) {
+							continue
+						}
+
 						return errors.New(fmt.Sprintf(
 							"Error on retrieve task %s from map of the father %s.",
 							task.Name, st.Task.Name))
@@ -767,4 +771,18 @@ func (s *DefaultScheduler) convertTasks2TaskScheduled(tasks *[]specs.Task, c *sp
 	}
 
 	return ans
+}
+
+func (s *DefaultScheduler) isExcludedTask(task specs.Task, opts SchedulerOpts) bool {
+
+	if len(task.Flags) > 0 && len(opts.PreExcludeTaskFlags) > 0 {
+
+		for _, f := range opts.PreExcludeTaskFlags {
+			if task.HasFlag(f) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

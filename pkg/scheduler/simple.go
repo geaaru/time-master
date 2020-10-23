@@ -91,7 +91,7 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 	}
 
 	// Elaborate task scheduled
-	err = s.elaborateTimesheets(false)
+	err = s.elaborateTimesheets(false, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 		}
 
 		// Elaborate task scheduled
-		err = s.elaborateTimesheets(true)
+		err = s.elaborateTimesheets(true, opts)
 		if err != nil {
 			return nil, err
 		}
