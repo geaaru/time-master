@@ -225,13 +225,14 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 
 			for _, r := range t.AllocatedResource {
 
-				s.Logger.Debug(fmt.Sprintf(
-					"[%s] [%s] [%s] Allocate resource...", workDate, r, t.Name))
-
 				rdm, ok := s.ResourcesMap[r]
 				if !ok {
 					return errors.New("Error on retrieve resource map for user " + r)
 				}
+
+				s.Logger.Debug(fmt.Sprintf(
+					"[%s] [%s] [%s] Allocate resource... (%d)", workDate, r, t.Name,
+					rdm.Days[workDate]))
 
 				// Check if the resource is available
 				available, err := rdm.Resource.IsAvailable(workDate)
@@ -267,7 +268,13 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 				} else {
 					// POST: no entry on resource daily map for this date
 
+					availableSecs = workDaySec
 					workTime = workDaySec
+
+					s.Logger.Debug(fmt.Sprintf(
+						"[%s] [%s] [%s] No daily map entry. I consider %d time available.",
+						workDate, r, t.Name, workDaySec))
+
 					if tasks[idx].LeftTime < workDaySec {
 						workTime = tasks[idx].LeftTime
 					}
@@ -283,11 +290,12 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 					),
 				)
 
-				s.Logger.Debug(fmt.Sprintf(
-					"[%s] [%s] [%s] Added %d sec. Left %d sec.",
-					workDate, r, t.Name, workTime, tasks[idx].LeftTime))
-
 				rdm.Days[workDate] = availableSecs - workTime
+
+				s.Logger.Debug(fmt.Sprintf(
+					"[%s] [%s] [%s] Added %d sec. Left %d sec (Left for resource %d).",
+					workDate, r, t.Name, workTime, tasks[idx].LeftTime,
+					rdm.Days[workDate]))
 
 				if tasks[idx].LeftTime == 0 {
 					completed = true

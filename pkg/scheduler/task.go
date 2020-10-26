@@ -226,6 +226,7 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 				} else {
 					// POST: no entry on resource daily map for this date
 
+					availableSecs = workDaySec
 					userTime = workDaySec
 					if leftTime < workDaySec {
 						userTime = leftTime
