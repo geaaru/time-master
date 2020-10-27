@@ -75,7 +75,7 @@ func (s *SimpleScheduler) BuildPrevision(opts SchedulerOpts) (*specs.ScenarioSch
 		s.ResourcesMap = make(map[string]*ResourceDailyMap, 0)
 	}
 
-	s.createTaskScheduled()
+	s.CreateTaskScheduled()
 
 	err = s.FilterPreElaborationFlags(opts)
 	if err != nil {

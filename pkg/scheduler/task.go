@@ -172,6 +172,11 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 			r.Task.Task.Recursive.Duration,
 			r.Scheduler.GetConfig().GetWork().WorkHours,
 		)
+		r.Scheduler.GetLogger().Debug(fmt.Sprintf(
+			"[%s] [%s] [%s] Left time %d", workDate, r.Task.Task.Name,
+			r.Task.Task.Recursive.Mode,
+			leftTime))
+
 		if err != nil {
 			return err
 		}
@@ -232,6 +237,9 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 						userTime = leftTime
 					}
 
+					r.Scheduler.GetLogger().Debug(fmt.Sprintf(
+						"[%s] [%s] [%s] No daily map entry. I consider %d time available.",
+						workDate, resource, r.Task.Task.Name, workDaySec))
 				}
 
 				leftTime -= userTime
@@ -258,7 +266,11 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 			}
 
 			// For monthly/weekly
-			workDate, err = r.self.GetNextDay(workDate)
+			if r.Task.Task.Recursive.Mode != "daily" && leftTime > 0 {
+				workDate, err = time.GetNextWorkDay(workDate)
+			} else {
+				workDate, err = r.self.GetNextDay(workDate)
+			}
 			if err != nil {
 				return err
 			}

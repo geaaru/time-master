@@ -385,7 +385,7 @@ func (s *DefaultScheduler) SetTimesheets(t *[]specs.AgendaTimesheets) {
 	s.Timesheets = *t
 }
 
-func (s *DefaultScheduler) createTaskScheduled() {
+func (s *DefaultScheduler) CreateTaskScheduled() {
 	// Retrieve the list of all tasks
 	for idx_c, client := range s.Clients {
 

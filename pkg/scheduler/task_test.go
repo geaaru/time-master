@@ -29,11 +29,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func initializeScheduler() *SimpleScheduler {
+func initConfig() *specs.TimeMasterConfig {
 	config := specs.NewTimeMasterConfig(nil)
 	config.GetGeneral().Debug = true
 	config.GetWork().WorkHours = 8
 	config.GetWork().TaskDefaultPriority = 100
+	return config
+}
+
+func initializeScheduler(config *specs.TimeMasterConfig) *SimpleScheduler {
 	scenario := &specs.Scenario{
 		Name:      "test",
 		Scheduler: "simple",
@@ -60,13 +64,45 @@ func initializeScheduler() *SimpleScheduler {
 	return scheduler
 }
 
+func initializeSchedulerMultiUser(config *specs.TimeMasterConfig) *SimpleScheduler {
+	scenario := &specs.Scenario{
+		Name:      "test",
+		Scheduler: "simple",
+	}
+
+	client := specs.NewClient("TEST1")
+	activity := specs.NewActivity("ACTIVITY1", "")
+
+	task := specs.NewTask("TASK1", "", "", []string{"user1", "user2", "user3"})
+	task.Recursive.Enable = true
+	task.Recursive.Mode = "weekly"
+	task.Recursive.Duration = "12h"
+
+	activity.AddTask(task)
+	client.AddActivity(*activity)
+
+	scheduler := NewSimpleScheduler(config, scenario)
+	scheduler.Resources = []specs.Resource{
+		*specs.NewResource("user1", "User One"),
+		*specs.NewResource("user2", "User Two"),
+		*specs.NewResource("user3", "User Two"),
+	}
+	scheduler.Timesheets = []specs.AgendaTimesheets{}
+	scheduler.Clients = []specs.Client{*client}
+
+	return scheduler
+}
+
 var _ = Describe("Scheduler Recursive Test", func() {
+
+	config := initConfig()
 
 	Context("Daily recursive task", func() {
 
-		scheduler := initializeScheduler()
+		scheduler := initializeScheduler(config)
 		scheduler.Clients[0].Activities[0].Tasks[0].Period.EndPeriod = "2020-09-12"
 
+		scheduler.CreateTaskScheduled()
 		scheduler.Init()
 
 		seer := NewRecursiveTaskSeer(scheduler, &scheduler.Scenario.Schedule[0])
@@ -94,10 +130,11 @@ var _ = Describe("Scheduler Recursive Test", func() {
 
 	Context("Daily recursive task", func() {
 
-		scheduler := initializeScheduler()
+		scheduler := initializeScheduler(config)
 		scheduler.Clients[0].Activities[0].Tasks[0].Period.EndPeriod = "2020-11-01"
 		scheduler.Clients[0].Activities[0].Tasks[0].Recursive.Mode = "monthly"
 
+		scheduler.CreateTaskScheduled()
 		scheduler.Init()
 		seer := NewRecursiveTaskSeer(scheduler, &scheduler.Scenario.Schedule[0])
 		err := seer.DoPrevision("2020-09-06")
@@ -120,10 +157,11 @@ var _ = Describe("Scheduler Recursive Test", func() {
 
 	Context("Weekly recursive task", func() {
 
-		scheduler := initializeScheduler()
+		scheduler := initializeScheduler(config)
 		scheduler.Clients[0].Activities[0].Tasks[0].Period.EndPeriod = "2020-10-01"
 		scheduler.Clients[0].Activities[0].Tasks[0].Recursive.Mode = "weekly"
 
+		scheduler.CreateTaskScheduled()
 		scheduler.Init()
 		seer := NewRecursiveTaskSeer(scheduler, &scheduler.Scenario.Schedule[0])
 		err := seer.DoPrevision("2020-09-06")
@@ -140,6 +178,89 @@ var _ = Describe("Scheduler Recursive Test", func() {
 					*specs.NewResourceTimesheet("user1", "2020-09-14", "ACTIVITY1.TASK1", "7200s"),
 					*specs.NewResourceTimesheet("user1", "2020-09-21", "ACTIVITY1.TASK1", "7200s"),
 					*specs.NewResourceTimesheet("user1", "2020-09-28", "ACTIVITY1.TASK1", "7200s"),
+				},
+			))
+		})
+
+	})
+
+	Context("Weekly recursive task multiple users", func() {
+
+		scheduler := initializeSchedulerMultiUser(config)
+		scheduler.Clients[0].Activities[0].Tasks[0].Period.EndPeriod = "2020-10-01"
+		scheduler.Clients[0].Activities[0].Tasks[0].Recursive.Mode = "weekly"
+
+		scheduler.CreateTaskScheduled()
+		scheduler.Init()
+		seer := NewRecursiveTaskSeer(scheduler, &scheduler.Scenario.Schedule[0])
+		err := seer.DoPrevision("2020-09-06")
+
+		prevision := scheduler.Scenario
+
+		It("Weekly 12h", func() {
+			Expect(err).Should(BeNil())
+			Expect(len(prevision.Schedule[0].Timesheets)).To(Equal(8))
+			Expect(prevision.Schedule[0].Timesheets).To(Equal(
+				[]specs.ResourceTimesheet{
+
+					*specs.NewResourceTimesheet("user1", "2020-09-07", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-07", "ACTIVITY1.TASK1", "14400s"),
+					*specs.NewResourceTimesheet("user1", "2020-09-14", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-14", "ACTIVITY1.TASK1", "14400s"),
+
+					*specs.NewResourceTimesheet("user1", "2020-09-21", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-21", "ACTIVITY1.TASK1", "14400s"),
+					*specs.NewResourceTimesheet("user1", "2020-09-28", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-28", "ACTIVITY1.TASK1", "14400s"),
+				},
+			))
+		})
+
+	})
+
+	Context("Monthly recursive task multiple users", func() {
+
+		scheduler := initializeSchedulerMultiUser(config)
+		scheduler.Clients[0].Activities[0].Tasks[0].Period.EndPeriod = "2020-11-15"
+		scheduler.Clients[0].Activities[0].Tasks[0].Recursive.Mode = "monthly"
+		scheduler.Clients[0].Activities[0].Tasks[0].Recursive.Duration = "7d"
+
+		scheduler.CreateTaskScheduled()
+		scheduler.Init()
+		seer := NewRecursiveTaskSeer(scheduler, &scheduler.Scenario.Schedule[0])
+		err := seer.DoPrevision("2020-09-06")
+
+		prevision := scheduler.Scenario
+
+		It("Monthly 7d", func() {
+			Expect(err).Should(BeNil())
+			Expect(len(prevision.Schedule[0].Timesheets)).To(Equal(21))
+			Expect(prevision.Schedule[0].Timesheets).To(Equal(
+				[]specs.ResourceTimesheet{
+
+					*specs.NewResourceTimesheet("user1", "2020-09-07", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-07", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-09-07", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-09-08", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-09-08", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-09-08", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-09-09", "ACTIVITY1.TASK1", "28800s"),
+
+					*specs.NewResourceTimesheet("user1", "2020-10-01", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-10-01", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-10-01", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-10-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-10-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-10-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-10-05", "ACTIVITY1.TASK1", "28800s"),
+
+					*specs.NewResourceTimesheet("user1", "2020-11-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-11-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-11-02", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-11-03", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user2", "2020-11-03", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user3", "2020-11-03", "ACTIVITY1.TASK1", "28800s"),
+					*specs.NewResourceTimesheet("user1", "2020-11-04", "ACTIVITY1.TASK1", "28800s"),
 				},
 			))
 		})
