@@ -1,5 +1,8 @@
 # Time Master
 
+[![Build Status](https://travis-ci.com/geaaru/time-master.svg?branch=master)](https://travis-ci.com/geaaru/time-master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/geaaru/time-master)](https://goreportcard.com/report/github.com/geaaru/time-master)
+
 All you need to monitor your activities and to plan your team tasks with an Opensource project.
 
 Based on the idea of [TaskJuggler](https://taskjuggler.org/) project.
