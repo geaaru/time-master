@@ -65,11 +65,13 @@ func (f *FrappeGanttProducer) Build(s *specs.ScenarioSchedule, opts ProducerOpts
 
 		startTime, err := time.ParseTimestamp(ts.Period.StartPeriod, true)
 		if err != nil {
+			f.Logger.Error("Error on on parse start date of task ", ts.Name)
 			return ans, err
 		}
 
 		endTime, err := time.ParseTimestamp(ts.Period.EndPeriod, true)
 		if err != nil {
+			f.Logger.Error("Error on on parse end date of task ", ts.Name)
 			return ans, err
 		}
 		ft := FrappeGanttTask{
