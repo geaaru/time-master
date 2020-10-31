@@ -129,6 +129,9 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 	// Retrieve the list of not closed tasks with effort
 	// and recursive tasks
 	for idx, ts := range s.Scenario.Schedule {
+
+		s.Logger.Debug(fmt.Sprintf("[%s] Check task for scheduling...", ts.Task.Name))
+
 		if ts.Task.Completed || (ts.Task.Effort == "" && !ts.Task.Recursive.Enable) {
 			continue
 		}
@@ -144,6 +147,8 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 			return err
 		}
 
+		s.Logger.Debug(fmt.Sprintf("[%s] Found effort %d (%d).",
+			ts.Task.Name, effortSecs, ts.WorkTime))
 		if ts.WorkTime > effortSecs {
 			s.Scenario.Schedule[idx].Underestimated = true
 			s.Scenario.Schedule[idx].LeftTime = 0
@@ -203,6 +208,8 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 
 		for idx, t := range tasks {
 
+			s.Logger.Debug(fmt.Sprintf("[%s] Starting assigning resources...",
+				t.Name))
 			completed := false
 
 			if len(t.AllocatedResource) == 0 {
@@ -216,6 +223,7 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 				}
 				if nowTime.Unix() < workTime.Unix() {
 					// POST: task start not now. I waiting for the right day.
+					inProgressTasks = append(inProgressTasks, tasks[idx])
 					continue
 				}
 			}
