@@ -69,3 +69,8 @@ type TaskReport struct {
 	Effort      string `json:"effort" yaml:"effort"`
 	EffortSec   int64  `json:"effort_sec" yaml:"effort_sec"`
 }
+
+type ChangeRequestReport struct {
+	*ChangeRequest
+	ActivityName string `json:"activity,omitempty" yaml:"activity,omitempty"`
+}

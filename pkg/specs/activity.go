@@ -40,15 +40,16 @@ func ActivityFromYaml(data []byte, file string) (*Activity, error) {
 
 func NewActivity(name, description string) *Activity {
 	return &Activity{
-		Name:        name,
-		Description: description,
-		Note:        "",
-		Priority:    100,
-		Disabled:    false,
-		Closed:      false,
-		Labels:      make(map[string]string, 0),
-		Flags:       []string{},
-		Tasks:       []Task{},
+		Name:           name,
+		Description:    description,
+		Note:           "",
+		Priority:       100,
+		Disabled:       false,
+		Closed:         false,
+		Labels:         make(map[string]string, 0),
+		Flags:          []string{},
+		Tasks:          []Task{},
+		ChangeRequests: []ChangeRequest{},
 	}
 }
 
@@ -81,6 +82,10 @@ func (a *Activity) GetPlannedEffortTotSecs(workHours int) (int64, error) {
 
 func (a *Activity) GetTasks() *[]Task {
 	return &a.Tasks
+}
+
+func (a *Activity) GetChangeRequests() *[]ChangeRequest {
+	return &a.ChangeRequests
 }
 
 func (a *Activity) GetTaskByFullName(name string) (*Task, error) {
