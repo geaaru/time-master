@@ -83,7 +83,19 @@ type Activity struct {
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
 
-	Tasks []Task `json:"tasks,omitempty" yaml:"tasks,omitempty"`
+	Tasks          []Task          `json:"tasks,omitempty" yaml:"tasks,omitempty"`
+	ChangeRequests []ChangeRequest `json:"change_requests,omitempty" yaml:"change_requests,omitempty"`
+}
+
+type ChangeRequest struct {
+	Name          string `json:"name" yaml:"name"`
+	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
+	Note          string `json:"note,omitempty" yaml:"note,omitempty"`
+	PreviousOffer int64  `json:"previous_offer,omitempty" yaml:"previous_offer,omitempty"`
+	Offer         int64  `json:"offer,omitempty" yaml:"offer,omitempty"`
+
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Flags  []string          `json:"flags,omitempty" yaml:"flags,omitempty"`
 }
 
 // General task structure for files specs
