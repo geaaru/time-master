@@ -72,7 +72,7 @@ func (a *ActivityReport) CalculateWorkPerc() {
 func (a *ActivityReport) CalculateProfitPerc() {
 	if a.Offer > 0 && a.WorkSecs > 0 {
 		a.ProfitPerc = fmt.Sprintf("%02.02f", ((float64(a.Profit) * 100) / float64(a.Offer)))
-	} else if a.IsTimeAndMaterial() {
+	} else if a.IsTimeAndMaterial() && a.Profit > 0 {
 		a.ProfitPerc = fmt.Sprintf("%02.02f", ((float64(a.Profit) * 100) / float64(a.RevenuePlan)))
 	}
 }
