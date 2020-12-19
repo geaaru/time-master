@@ -35,14 +35,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity, scenario string) (string, int64, float64, float64, error) {
+func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity,
+	scenario, from, to string) (string, int64, float64, float64, error) {
 
 	researchOpts := specs.TimesheetResearch{
 		ByActivity: true,
 		IgnoreTime: true,
 	}
 
-	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, "", "", []string{}, []string{activity})
+	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, from, to, []string{}, []string{activity})
 	if err != nil {
 		return "", 0, 0, 0, err
 	}
@@ -89,6 +90,8 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			csvOutput, _ := cmd.Flags().GetBool("csv")
 			scenario, _ := cmd.Flags().GetString("scenario-name")
 			scenarioFile, _ := cmd.Flags().GetString("scenario")
+			from, _ := cmd.Flags().GetString("from")
+			to, _ := cmd.Flags().GetString("to")
 
 			// Create Instance
 			tm := loader.NewTimeMasterInstance(config)
@@ -203,7 +206,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				}
 
 				// Retrieve work time
-				work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario)
+				work, workSecs, cost, revenue, err := retrieveWorkTimeByActivity(tm, activity.Name, scenario, from, to)
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
@@ -421,5 +424,9 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Exclude activities from report.")
 	flags.StringSliceVar(&excludeActivityFlags, "exclude-aflag", []string{},
 		"Exclude activities with matched flag from report.")
+
+	flags.String("from", "", "Specify from date in format YYYY-MM-DD.")
+	flags.String("to", "", "Specify to date in format YYYY-MM-DD.")
+
 	return cmd
 }
