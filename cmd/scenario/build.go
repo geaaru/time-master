@@ -61,6 +61,7 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			skipEmptyTasks, _ := cmd.Flags().GetBool("skip-empty-tasks")
 			skipPlan, _ := cmd.Flags().GetBool("skip-plan")
 			withClientData, _ := cmd.Flags().GetBool("with-client-data")
+			ignoreMissingDeps, _ := cmd.Flags().GetBool("ignore-missing-deps")
 			now, _ := cmd.Flags().GetString("now")
 			targetFile, _ := cmd.Flags().GetString("file")
 
@@ -109,9 +110,10 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				PostExcludeTaskFlags:     postTasksFlags,
 				PostExcludeActivityFlags: postActivityFlags,
 
-				OnlyClosed:     onlyClosed,
-				SkipEmptyTasks: skipEmptyTasks,
-				SkipPlan:       skipPlan,
+				OnlyClosed:        onlyClosed,
+				SkipEmptyTasks:    skipEmptyTasks,
+				SkipPlan:          skipPlan,
+				IgnoreMissingDeps: ignoreMissingDeps,
 			}
 
 			prevision, err := sched.BuildPrevision(opts)
@@ -176,6 +178,7 @@ func NewBuildCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.Bool("skip-empty-tasks", false, "Skip tasks closed without effort.")
 	flags.Bool("skip-plan", false, "Avoid simulation and report only available timesheets.")
 	flags.Bool("with-client-data", false, "Write also client data on prevision file.")
+	flags.Bool("ignore-missing-deps", false, "Ignore tasks missing dependencies.")
 	flags.StringP("file", "f", "", "Set the file where to write calculate prevision.")
 	flags.String("now", "", "Override now value of the scenario in the format YYYY-MM-DD.")
 

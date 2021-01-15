@@ -47,9 +47,10 @@ type TimeMasterScheduler interface {
 }
 
 type SchedulerOpts struct {
-	SkipPlan       bool
-	OnlyClosed     bool
-	SkipEmptyTasks bool
+	SkipPlan          bool
+	OnlyClosed        bool
+	SkipEmptyTasks    bool
+	IgnoreMissingDeps bool
 
 	// Pre elaboration filter
 
@@ -528,6 +529,9 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool, opts 
 							continue
 						}
 
+						if opts.IgnoreMissingDeps {
+							continue
+						}
 						return errors.New(fmt.Sprintf(
 							"Error on retrieve task %s from map of the father %s.",
 							task.Name, st.Task.Name))
@@ -586,6 +590,9 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool, opts 
 				// Retrieve task scheduled of the childer
 				cst, ok := s.taskMap[task]
 				if !ok {
+					if opts.IgnoreMissingDeps {
+						continue
+					}
 					return errors.New(fmt.Sprintf(
 						"Error on retrieve task %s from map of the father %s.",
 						task, st.Task.Name))
@@ -634,6 +641,9 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool, opts 
 			// Retrieve task scheduled of the childer
 			cst, ok := s.taskMap[task]
 			if !ok {
+				if opts.IgnoreMissingDeps {
+					continue
+				}
 				return errors.New(fmt.Sprintf(
 					"Error on retrieve task %s from map of the father %s.",
 					task, st.Task.Name))
@@ -689,6 +699,9 @@ func (s *DefaultScheduler) elaborateFatherTasksAndMilestone(withPlan bool, opts 
 			// Retrieve task scheduled of the childer
 			cst, ok := s.taskMap[task]
 			if !ok {
+				if opts.IgnoreMissingDeps {
+					continue
+				}
 				return errors.New(fmt.Sprintf(
 					"Error on retrieve task %s from map of the father %s.",
 					task, st.Task.Name))
