@@ -186,6 +186,10 @@ func (r *DefaultRecursiveTaskSeer) DoPrevision(now string) error {
 			availableSecs := workDaySec
 			userTime := int64(0)
 
+			if len(r.Task.Task.AllocatedResource) == 0 {
+				return errors.New(fmt.Sprintf("[%s] No resources allocated!", r.Task.Task.Name))
+			}
+
 			for _, resource := range r.Task.Task.AllocatedResource {
 
 				r.Scheduler.GetLogger().Debug(fmt.Sprintf(

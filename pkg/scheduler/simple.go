@@ -231,11 +231,17 @@ func (s *SimpleScheduler) doPrevision(opts SchedulerOpts) error {
 			availableSecs := workDaySec
 			workTime := int64(0)
 
+			if len(t.AllocatedResource) == 0 {
+				return errors.New(fmt.Sprintf("[%s] No resources allocated!", t.Name))
+			}
+
 			for _, r := range t.AllocatedResource {
 
 				rdm, ok := s.ResourcesMap[r]
 				if !ok {
-					return errors.New("Error on retrieve resource map for user " + r)
+					return errors.New(fmt.Sprintf(
+						"[%s] Error on retrieve resource map for user '%s'",
+						t.Name, r))
 				}
 
 				s.Logger.Debug(fmt.Sprintf(
