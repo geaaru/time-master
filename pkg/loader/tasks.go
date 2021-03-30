@@ -111,6 +111,19 @@ func (i *TimeMasterInstance) GetTasks(opts specs.TaskResearch) ([]specs.Task, er
 					}
 				}
 
+				if len(opts.ExcludeFlags) > 0 {
+					matchExcludedFlags := false
+					for _, flag := range task.Flags {
+						if tools.RegexEntry(flag, opts.ExcludeFlags) {
+							matchExcludedFlags = true
+							break
+						}
+					}
+					if matchExcludedFlags {
+						continue
+					}
+				}
+
 				if len(opts.Flags) > 0 {
 					matchFlags := false
 					for _, flag := range task.Flags {

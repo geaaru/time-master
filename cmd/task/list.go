@@ -41,6 +41,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var tasks []string
 	var labels []string
 	var flagsFilter []string
+	var flagsExcludeFilter []string
 	var activityLabels []string
 	var activityFlags []string
 
@@ -104,6 +105,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				Clients:            clients,
 				Labels:             labels,
 				Flags:              flagsFilter,
+				ExcludeFlags:       flagsExcludeFilter,
 				ActivityFlags:      activityFlags,
 				ActivityLabels:     activityLabels,
 				OnlyClosedActivity: onlyClosed,
@@ -354,6 +356,8 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Filter for activities that contains labels with regex string.")
 	flags.StringSliceVar(&activityFlags, "activity-flag", []string{},
 		"Filter for activities that contains flags with regex string.")
+	flags.StringSliceVar(&flagsExcludeFilter, "exclude-flag", []string{},
+		"Exclude tasks with flags with regex string.")
 
 	return cmd
 }

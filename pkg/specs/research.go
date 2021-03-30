@@ -42,6 +42,7 @@ type TaskResearch struct {
 	ActivityLabels     []string
 	Tasks              []string
 	Clients            []string
+	ExcludeFlags       []string
 }
 
 type ActivityResearch struct {
