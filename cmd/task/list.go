@@ -98,6 +98,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			jsonTask, _ := cmd.Flags().GetBool("json-task")
 			minimal, _ := cmd.Flags().GetBool("minimal")
 			showWorkHours, _ := cmd.Flags().GetBool("show-work-hours")
+			showCost, _ := cmd.Flags().GetBool("show-cost")
+			scenario, _ := cmd.Flags().GetString("scenario-name")
+			scenarioFile, _ := cmd.Flags().GetString("scenario")
 
 			opts := specs.TaskResearch{
 				Users:              users,
@@ -113,6 +116,27 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				OnlyMilestone:      onlyMilestone,
 				Milestone:          withMilestone,
 				WithEffort:         withEffort,
+			}
+
+			if scenarioFile != "" {
+				prevision, err := specs.ScenarioScheduleFromFile(scenarioFile)
+				if err != nil {
+					fmt.Println("Error on load scenario file: " + err.Error())
+					os.Exit(1)
+				}
+
+				tm.SetAgendaTimesheets([]specs.AgendaTimesheets{
+					*prevision.GetAllResourceTimesheets(),
+				})
+			}
+
+			if scenario != "" {
+				// Assign cost/revenue to ResourceTimesheet
+				err := tm.CalculateTimesheetsCostAndRevenue(scenario)
+				if err != nil {
+					fmt.Println("Error on calculate cost/revenue: " + err.Error())
+					os.Exit(1)
+				}
 			}
 
 			res, err := tm.GetTasks(opts)
@@ -177,6 +201,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						if rta != nil {
 							tr.Work = rta.GetDuration()
 							tr.WorkSec = rta.GetSeconds()
+							if showCost {
+								tr.Cost = rta.GetCost()
+							}
 						}
 					}
 
@@ -196,6 +223,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				records[0] = []string{"Task", "Description"}
 				if showWorkHours {
 					records[0] = append(records[0], "Work")
+					if showCost {
+						records[0] = append(records[0], "Cost")
+					}
 				}
 
 				if !minimal {
@@ -211,11 +241,18 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					if showWorkHours {
 						rta, _ := rtaMap[t.Name]
 						work := ""
+						cost := ""
 						if rta != nil {
 							work = rta.GetDuration()
+							if showCost {
+								cost = fmt.Sprintf("%f", rta.GetCost())
+							}
 						}
 
 						records[idx+1] = append(records[idx+1], work)
+						if showCost {
+							records[idx+1] = append(records[idx+1], cost)
+						}
 					}
 
 					if !minimal {
@@ -267,6 +304,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 				if showWorkHours {
 					headers = append(headers, "Work")
+					if showCost {
+						headers = append(headers, "Cost")
+					}
 				}
 				if !minimal {
 					headers = append(headers, "Effort")
@@ -278,6 +318,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 				totEffort := int64(0)
 				totWork := int64(0)
+				totCost := float64(0)
 				for _, t := range res {
 
 					durationEffort := ""
@@ -300,11 +341,19 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					if showWorkHours {
 						rta, _ := rtaMap[t.Name]
 						work := ""
+						cost := ""
 						if rta != nil {
 							work = rta.GetDuration()
 							totWork += rta.GetSeconds()
+							if showCost {
+								totCost += rta.GetCost()
+								cost = fmt.Sprintf("%02.02f", rta.GetCost())
+							}
 						}
 						row = append(row, work)
+						if showCost {
+							row = append(row, cost)
+						}
 					}
 					if !minimal {
 						row = append(row, durationEffort)
@@ -320,6 +369,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				footer := []string{fmt.Sprintf("Total (%d)", len(res)), ""}
 				if showWorkHours {
 					footer = append(footer, durationWork)
+					if showCost {
+						footer = append(footer, fmt.Sprintf("%02.02f", totCost))
+					}
 				}
 				if !minimal {
 					footer = append(footer, duration)
@@ -339,8 +391,11 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.Bool("only-closed", false, "Show only tasks of closed activities.")
 	flags.Bool("with-effort", false, "Show only tasks with effort")
 	flags.Bool("show-work-hours", false, "Show also worked hours")
+	flags.Bool("show-cost", false, "Show also cost. Require --show-work-hours.")
 	flags.Bool("with-milestone", false, "Include tasks of milestone")
 	flags.Bool("only-milestone", false, "Show only milestone tasks")
+	flags.String("scenario-name", "", "Specify scenario name for cost/revenue.")
+	flags.String("scenario", "", "Specify path of the scenario prevision to load.")
 	flags.Bool("minimal", false, "Show only minimal informations.")
 	flags.StringSliceVarP(&tasks, "task", "t", []string{},
 		"Filter for tasks with regex string.")

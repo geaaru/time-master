@@ -62,12 +62,13 @@ type TimesheetReportEvent struct {
 type TaskReport struct {
 	*Task `json:"task,omitempty" yaml:"task,omitempty"`
 
-	Name        string `json:"name" yaml:"name"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Work        string `json:"work,omitempty" yaml:"work,omitempty"`
-	WorkSec     int64  `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
-	Effort      string `json:"effort" yaml:"effort"`
-	EffortSec   int64  `json:"effort_sec" yaml:"effort_sec"`
+	Name        string  `json:"name" yaml:"name"`
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Work        string  `json:"work,omitempty" yaml:"work,omitempty"`
+	WorkSec     int64   `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
+	Effort      string  `json:"effort" yaml:"effort"`
+	EffortSec   int64   `json:"effort_sec" yaml:"effort_sec"`
+	Cost        float64 `json:"cost,omitempty" yaml:"cost,omitempty"`
 }
 
 type ChangeRequestReport struct {
