@@ -101,6 +101,8 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			showCost, _ := cmd.Flags().GetBool("show-cost")
 			scenario, _ := cmd.Flags().GetString("scenario-name")
 			scenarioFile, _ := cmd.Flags().GetString("scenario")
+			from, _ := cmd.Flags().GetString("from")
+			to, _ := cmd.Flags().GetString("to")
 
 			opts := specs.TaskResearch{
 				Users:              users,
@@ -150,7 +152,7 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				IgnoreTime: true,
 			}
 
-			rtaMap, err := tm.GetAggregatedTimesheetsMap(researchOpts, "", "", users, tasks)
+			rtaMap, err := tm.GetAggregatedTimesheetsMap(researchOpts, from, to, users, tasks)
 			if err != nil {
 				fmt.Println("Error on elaborate timesheet: " + err.Error())
 				os.Exit(1)
@@ -413,6 +415,9 @@ func NewListCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Filter for activities that contains flags with regex string.")
 	flags.StringSliceVar(&flagsExcludeFilter, "exclude-flag", []string{},
 		"Exclude tasks with flags with regex string.")
+
+	flags.String("from", "", "Specify from date in format YYYY-MM-DD.")
+	flags.String("to", "", "Specify to date in format YYYY-MM-DD.")
 
 	return cmd
 }
