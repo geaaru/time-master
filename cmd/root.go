@@ -34,11 +34,11 @@ import (
 )
 
 const (
-	cliName = `Copyright (c) 2020 - Daniele Rondina
+	cliName = `Copyright (c) 2020-2021 - Daniele Rondina
 
 Time Master`
 
-	TM_VERSION = `0.3.0`
+	TM_VERSION = `0.3.1`
 )
 
 // Build time and commit information. This code is get from: https://github.com/mudler/luet/
