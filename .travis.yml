@@ -10,9 +10,12 @@ before_install:
 script:
   - make multiarch-build test-coverage
 after_success:
-  - |
-      if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        git config --global user.name "Deployer" && git config --global user.email foo@bar.com
-        go get github.com/tcnksm/ghr
-        ghr -u geaaru -r time-master --replace $TRAVIS_TAG release/
-      fi
+
+# calls goreleaser
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux
