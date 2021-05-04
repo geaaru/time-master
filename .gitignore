@@ -2,3 +2,4 @@
 time-master
 workspace
 .time-master.yml
+dist/
