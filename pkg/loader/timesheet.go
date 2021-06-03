@@ -174,7 +174,6 @@ func (i *TimeMasterInstance) GetAggregatedTimesheets(opts specs.TimesheetResearc
 	}
 
 	for _, v := range tsMap {
-		v.CalculateDuration()
 		ans = append(ans, *v)
 	}
 
