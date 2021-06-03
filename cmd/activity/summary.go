@@ -43,7 +43,7 @@ func retrieveWorkTimeByActivity(tm *loader.TimeMasterInstance, activity,
 		IgnoreTime: true,
 	}
 
-	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, from, to, []string{}, []string{activity})
+	rtaList, err := tm.GetAggregatedTimesheets(researchOpts, from, to, []string{}, []string{"^" + activity})
 	if err != nil {
 		return "", 0, 0, 0, err
 	}
