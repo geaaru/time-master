@@ -49,7 +49,6 @@ var (
 	ErrRepositoryAlreadyExists   = errors.New("repository already exists")
 	ErrRemoteNotFound            = errors.New("remote not found")
 	ErrRemoteExists              = errors.New("remote already exists")
-	ErrAnonymousRemoteName       = errors.New("anonymous remote name must be 'anonymous'")
 	ErrWorktreeNotProvided       = errors.New("worktree should be provided")
 	ErrIsBareRepository          = errors.New("worktree not available in a bare repository")
 	ErrUnableToResolveCommit     = errors.New("unable to resolve commit")
@@ -451,7 +450,7 @@ func (r *Repository) Remote(name string) (*Remote, error) {
 		return nil, ErrRemoteNotFound
 	}
 
-	return NewRemote(r.Storer, c), nil
+	return newRemote(r.Storer, c), nil
 }
 
 // Remotes returns a list with all the remotes
@@ -465,7 +464,7 @@ func (r *Repository) Remotes() ([]*Remote, error) {
 
 	var i int
 	for _, c := range cfg.Remotes {
-		remotes[i] = NewRemote(r.Storer, c)
+		remotes[i] = newRemote(r.Storer, c)
 		i++
 	}
 
@@ -478,7 +477,7 @@ func (r *Repository) CreateRemote(c *config.RemoteConfig) (*Remote, error) {
 		return nil, err
 	}
 
-	remote := NewRemote(r.Storer, c)
+	remote := newRemote(r.Storer, c)
 
 	cfg, err := r.Storer.Config()
 	if err != nil {
@@ -491,22 +490,6 @@ func (r *Repository) CreateRemote(c *config.RemoteConfig) (*Remote, error) {
 
 	cfg.Remotes[c.Name] = c
 	return remote, r.Storer.SetConfig(cfg)
-}
-
-// CreateRemoteAnonymous creates a new anonymous remote. c.Name must be "anonymous".
-// It's used like 'git fetch git@github.com:src-d/go-git.git master:master'.
-func (r *Repository) CreateRemoteAnonymous(c *config.RemoteConfig) (*Remote, error) {
-	if err := c.Validate(); err != nil {
-		return nil, err
-	}
-
-	if c.Name != "anonymous" {
-		return nil, ErrAnonymousRemoteName
-	}
-
-	remote := NewRemote(r.Storer, c)
-
-	return remote, nil
 }
 
 // DeleteRemote delete a remote from the repository and delete the config
@@ -1306,6 +1289,16 @@ func (r *Repository) Worktree() (*Worktree, error) {
 	return &Worktree{r: r, Filesystem: r.wt}, nil
 }
 
+func countTrue(vals ...bool) int {
+	sum := 0
+	for _, v := range vals {
+		if v {
+			sum++
+		}
+	}
+	return sum
+}
+
 // ResolveRevision resolves revision to corresponding hash. It will always
 // resolve to a commit hash, not a tree or annotated tag.
 //
@@ -1326,57 +1319,54 @@ func (r *Repository) ResolveRevision(rev plumbing.Revision) (*plumbing.Hash, err
 		switch item.(type) {
 		case revision.Ref:
 			revisionRef := item.(revision.Ref)
-
-			var tryHashes []plumbing.Hash
-
-			maybeHash := plumbing.NewHash(string(revisionRef))
-
-			if !maybeHash.IsZero() {
-				tryHashes = append(tryHashes, maybeHash)
-			}
+			var ref *plumbing.Reference
+			var hashCommit, refCommit, tagCommit *object.Commit
+			var rErr, hErr, tErr error
 
 			for _, rule := range append([]string{"%s"}, plumbing.RefRevParseRules...) {
-				ref, err := storer.ResolveReference(r.Storer, plumbing.ReferenceName(fmt.Sprintf(rule, revisionRef)))
+				ref, err = storer.ResolveReference(r.Storer, plumbing.ReferenceName(fmt.Sprintf(rule, revisionRef)))
 
 				if err == nil {
-					tryHashes = append(tryHashes, ref.Hash())
 					break
 				}
 			}
 
-			// in ambiguous cases, `git rev-parse` will emit a warning, but
-			// will always return the oid in preference to a ref; we don't have
-			// the ability to emit a warning here, so (for speed purposes)
-			// don't bother to detect the ambiguity either, just return in the
-			// priority that git would.
-			gotOne := false
-			for _, hash := range tryHashes {
-				commitObj, err := r.CommitObject(hash)
-				if err == nil {
-					commit = commitObj
-					gotOne = true
-					break
+			if ref != nil {
+				tag, tObjErr := r.TagObject(ref.Hash())
+				if tObjErr != nil {
+					tErr = tObjErr
+				} else {
+					tagCommit, tErr = tag.Commit()
 				}
-
-				tagObj, err := r.TagObject(hash)
-				if err == nil {
-					// If the tag target lookup fails here, this most likely
-					// represents some sort of repo corruption, so let the
-					// error bubble up.
-					tagCommit, err := tagObj.Commit()
-					if err != nil {
-						return &plumbing.ZeroHash, err
-					}
-					commit = tagCommit
-					gotOne = true
-					break
-				}
+				refCommit, rErr = r.CommitObject(ref.Hash())
+			} else {
+				rErr = plumbing.ErrReferenceNotFound
+				tErr = plumbing.ErrReferenceNotFound
 			}
 
-			if !gotOne {
+			maybeHash := plumbing.NewHash(string(revisionRef)).String() == string(revisionRef)
+			if maybeHash {
+				hashCommit, hErr = r.CommitObject(plumbing.NewHash(string(revisionRef)))
+			} else {
+				hErr = plumbing.ErrReferenceNotFound
+			}
+
+			isTag := tErr == nil
+			isCommit := rErr == nil
+			isHash := hErr == nil
+
+			switch {
+			case countTrue(isTag, isCommit, isHash) > 1:
+				return &plumbing.ZeroHash, fmt.Errorf(`refname "%s" is ambiguous`, revisionRef)
+			case isTag:
+				commit = tagCommit
+			case isCommit:
+				commit = refCommit
+			case isHash:
+				commit = hashCommit
+			default:
 				return &plumbing.ZeroHash, plumbing.ErrReferenceNotFound
 			}
-
 		case revision.CaretPath:
 			depth := item.(revision.CaretPath).Depth
 

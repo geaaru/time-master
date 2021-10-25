@@ -3,6 +3,7 @@ cd "$(dirname $0)"
 PATH=$HOME/go/bin:$PATH
 unset GOPATH
 export GO111MODULE=on
+export GOARCH=${1}
 
 function v
 {
@@ -26,13 +27,13 @@ fi
 echo date...
 v go test -v -covermode=count -coverprofile=date.out .
 v go tool cover -func=date.out
-[ -z "$COVERALLS_TOKEN" ] || goveralls -coverprofile=date.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+#[ -z "$COVERALLS_TOKEN" ] || goveralls -coverprofile=date.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 for d in clock period timespan view; do
   echo $d...
   v go test -v -covermode=count -coverprofile=$d.out ./$d
   v go tool cover -func=$d.out
-  [ -z "$COVERALLS_TOKEN" ] || goveralls -coverprofile=$d.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  #[ -z "$COVERALLS_TOKEN" ] || goveralls -coverprofile=$d.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 done
 
 v goreturns -l -w *.go */*.go

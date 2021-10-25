@@ -222,7 +222,7 @@ type MultiEncodedObjectIter struct {
 }
 
 // NewMultiEncodedObjectIter returns an object iterator for the given slice of
-// EncodedObjectIters.
+// objects.
 func NewMultiEncodedObjectIter(iters []EncodedObjectIter) EncodedObjectIter {
 	return &MultiEncodedObjectIter{iters: iters}
 }

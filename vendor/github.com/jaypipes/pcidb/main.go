@@ -13,70 +13,54 @@ import (
 )
 
 var (
-	ERR_NO_DB = fmt.Errorf("No pci-ids DB files found (and network fetch disabled)")
-	trueVar   = true
+	cacheOnlyTrue = true
 )
 
 // ProgrammingInterface is the PCI programming interface for a class of PCI
 // devices
 type ProgrammingInterface struct {
-	// hex-encoded PCI_ID of the programming interface
-	ID string `json:"id"`
-	// common string name for the programming interface
-	Name string `json:"name"`
+	ID   string // hex-encoded PCI_ID of the programming interface
+	Name string // common string name for the programming interface
 }
 
 // Subclass is a subdivision of a PCI class
 type Subclass struct {
-	// hex-encoded PCI_ID for the device subclass
-	ID string `json:"id"`
-	// common string name for the subclass
-	Name string `json:"name"`
-	// any programming interfaces this subclass might have
-	ProgrammingInterfaces []*ProgrammingInterface `json:"programming_interfaces"`
+	ID                    string                  // hex-encoded PCI_ID for the device subclass
+	Name                  string                  // common string name for the subclass
+	ProgrammingInterfaces []*ProgrammingInterface // any programming interfaces this subclass might have
 }
 
 // Class is the PCI class
 type Class struct {
-	// hex-encoded PCI_ID for the device class
-	ID string `json:"id"`
-	// common string name for the class
-	Name string `json:"name"`
-	// any subclasses belonging to this class
-	Subclasses []*Subclass `json:"subclasses"`
+	ID         string      // hex-encoded PCI_ID for the device class
+	Name       string      // common string name for the class
+	Subclasses []*Subclass // any subclasses belonging to this class
 }
 
 // Product provides information about a PCI device model
 // NOTE(jaypipes): In the hardware world, the PCI "device_id" is the identifier
 // for the product/model
 type Product struct {
-	// vendor ID for the product
-	VendorID string `json:"vendor_id"`
-	// hex-encoded PCI_ID for the product/model
-	ID string `json:"id"`
-	// common string name of the vendor
-	Name string `json:"name"`
-	// "subdevices" or "subsystems" for the product
-	Subsystems []*Product `json:"subsystems"`
+	VendorID   string     // vendor ID for the product
+	ID         string     // hex-encoded PCI_ID for the product/model
+	Name       string     // common string name of the vendor
+	Subsystems []*Product // "subdevices" or "subsystems" for the product
 }
 
 // Vendor provides information about a device vendor
 type Vendor struct {
-	// hex-encoded PCI_ID for the vendor
-	ID string `json:"id"`
-	// common string name of the vendor
-	Name string `json:"name"`
-	// all top-level devices for the vendor
-	Products []*Product `json:"products"`
+	ID       string     // hex-encoded PCI_ID for the vendor
+	Name     string     // common string name of the vendor
+	Products []*Product // all top-level devices for the vendor
 }
 
 type PCIDB struct {
 	// hash of class ID -> class information
-	Classes map[string]*Class `json:"classes"`
+	Classes map[string]*Class
 	// hash of vendor ID -> vendor information
-	Vendors map[string]*Vendor `json:"vendors"`
+	Vendors map[string]*Vendor
 	// hash of vendor ID + product/device ID -> product information
-	Products map[string]*Product `json:"products"`
+	Products map[string]*Product
 }
 
 // WithOption is used to represent optionally-configured settings
@@ -88,11 +72,6 @@ type WithOption struct {
 	// looking for any non ~/.cache/pci.ids filepaths (which is useful when we
 	// want to test the fetch-from-network code paths
 	CacheOnly *bool
-	// Disables the default behaviour of fetching a pci-ids from a known
-	// location on the network if no local pci-ids DB files can be found.
-	// Useful for secure environments or environments with no network
-	// connectivity.
-	DisableNetworkFetch *bool
 }
 
 func WithChroot(dir string) *WithOption {
@@ -100,11 +79,7 @@ func WithChroot(dir string) *WithOption {
 }
 
 func WithCacheOnly() *WithOption {
-	return &WithOption{CacheOnly: &trueVar}
-}
-
-func WithDisableNetworkFetch() *WithOption {
-	return &WithOption{DisableNetworkFetch: &trueVar}
+	return &WithOption{CacheOnly: &cacheOnlyTrue}
 }
 
 func mergeOptions(opts ...*WithOption) *WithOption {
@@ -126,20 +101,6 @@ func mergeOptions(opts ...*WithOption) *WithOption {
 			defaultCacheOnly = parsed
 		}
 	}
-	defaultDisableNetworkFetch := false
-	if val, exists := os.LookupEnv("PCIDB_DISABLE_NETWORK_FETCH"); exists {
-		if parsed, err := strconv.ParseBool(val); err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Failed parsing a bool from PCIDB_DISABLE_NETWORK_FETCH "+
-					"environ value of %s",
-				val,
-			)
-		} else if parsed {
-			defaultDisableNetworkFetch = parsed
-		}
-	}
-
 	merged := &WithOption{}
 	for _, opt := range opts {
 		if opt.Chroot != nil {
@@ -148,9 +109,6 @@ func mergeOptions(opts ...*WithOption) *WithOption {
 		if opt.CacheOnly != nil {
 			merged.CacheOnly = opt.CacheOnly
 		}
-		if opt.DisableNetworkFetch != nil {
-			merged.DisableNetworkFetch = opt.DisableNetworkFetch
-		}
 	}
 	// Set the default value if missing from merged
 	if merged.Chroot == nil {
@@ -158,9 +116,6 @@ func mergeOptions(opts ...*WithOption) *WithOption {
 	}
 	if merged.CacheOnly == nil {
 		merged.CacheOnly = &defaultCacheOnly
-	}
-	if merged.DisableNetworkFetch == nil {
-		merged.DisableNetworkFetch = &defaultDisableNetworkFetch
 	}
 	return merged
 }
@@ -174,8 +129,6 @@ func mergeOptions(opts ...*WithOption) *WithOption {
 func New(opts ...*WithOption) (*PCIDB, error) {
 	ctx := contextFromOptions(mergeOptions(opts...))
 	db := &PCIDB{}
-	if err := db.load(ctx); err != nil {
-		return nil, err
-	}
-	return db, nil
+	err := db.load(ctx)
+	return db, err
 }
