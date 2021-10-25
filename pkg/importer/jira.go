@@ -30,8 +30,8 @@ import (
 	"strings"
 
 	specs "github.com/geaaru/time-master/pkg/specs"
+	"github.com/geaaru/time-master/pkg/tools"
 
-	"github.com/mudler/luet/pkg/helpers"
 	"gopkg.in/yaml.v2"
 )
 
@@ -110,7 +110,7 @@ func (i *TmJiraImporter) ImportMapper(mapper *TmJiraMapper) {
 }
 
 func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
-	if !helpers.Exists(csvFile) {
+	if !tools.Exists(csvFile) {
 		return errors.New("File " + csvFile + " not present")
 	}
 

@@ -29,8 +29,7 @@ import (
 	"regexp"
 
 	specs "github.com/geaaru/time-master/pkg/specs"
-
-	helpers "github.com/mudler/luet/pkg/helpers"
+	"github.com/geaaru/time-master/pkg/tools"
 )
 
 func (i *TimeMasterInstance) Load() error {
@@ -73,7 +72,7 @@ func (i *TimeMasterInstance) loadExtraClientFiles(client *specs.Client) error {
 
 			dir := path.Join(clientBaseDir, adir)
 
-			if !helpers.Exists(dir) {
+			if !tools.Exists(dir) {
 				i.Logger.Debug("For client", client.Name, "activity dir", adir,
 					"is not present.")
 				continue

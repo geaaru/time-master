@@ -22,8 +22,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package tools
 
 import (
+	"os"
 	"regexp"
 )
+
+func Exists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
+}
 
 func MatchEntry(entry string, whitelist []string) bool {
 	for _, e := range whitelist {
