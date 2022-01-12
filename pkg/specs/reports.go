@@ -33,6 +33,8 @@ type ActivityReport struct {
 	Duration   string `json:"duration,omitempty" yaml:"duration,omitempty"`
 	ProfitPerc string `json:"profit_perc,omitempty" yaml:"profit_perc,omitempty"`
 
+	BusinessProgressPerc string `json:"business_progress_perc,omitempty" yaml:"business_progress_perc,omitempty"`
+
 	Effort   int64 `json:"effort_sec,omitempty" yaml:"effort_sec,omitempty"`
 	WorkSecs int64 `json:"work_sec,omitempty" yaml:"work_sec,omitempty"`
 }

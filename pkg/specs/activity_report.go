@@ -43,6 +43,7 @@ func NewActivityReport(a Activity, filtered bool) *ActivityReport {
 			Flags:        a.Flags,
 			Tasks:        []Task{},
 		},
+		BusinessProgressPerc: "0",
 	}
 
 	if !filtered {
@@ -55,13 +56,14 @@ func NewActivityReport(a Activity, filtered bool) *ActivityReport {
 	return ans
 }
 
-func (a *ActivityReport) SetRevenuePlan(v float64) { a.RevenuePlan = v }
-func (a *ActivityReport) SetCost(v float64)        { a.Cost = v }
-func (a *ActivityReport) SetProfit(v float64)      { a.Profit = v }
-func (a *ActivityReport) SetWork(v string)         { a.Work = v }
-func (a *ActivityReport) SetWorkPerc(v string)     { a.WorkPerc = v }
-func (a *ActivityReport) SetEffort(v int64)        { a.Effort = v }
-func (a *ActivityReport) SetWorkSecs(v int64)      { a.WorkSecs = v }
+func (a *ActivityReport) SetRevenuePlan(v float64)         { a.RevenuePlan = v }
+func (a *ActivityReport) SetCost(v float64)                { a.Cost = v }
+func (a *ActivityReport) SetProfit(v float64)              { a.Profit = v }
+func (a *ActivityReport) SetWork(v string)                 { a.Work = v }
+func (a *ActivityReport) SetWorkPerc(v string)             { a.WorkPerc = v }
+func (a *ActivityReport) SetBusinessProgressPerc(v string) { a.BusinessProgressPerc = v }
+func (a *ActivityReport) SetEffort(v int64)                { a.Effort = v }
+func (a *ActivityReport) SetWorkSecs(v int64)              { a.WorkSecs = v }
 
 func (a *ActivityReport) CalculateWorkPerc() {
 	if a.WorkSecs > 0 && a.Effort > 0 {
