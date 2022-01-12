@@ -23,8 +23,76 @@ package loader
 
 import (
 	specs "github.com/geaaru/time-master/pkg/specs"
+	tmtime "github.com/geaaru/time-master/pkg/time"
 	tools "github.com/geaaru/time-master/pkg/tools"
 )
+
+func (i *TimeMasterInstance) CalculateActivityBusinessProgress(aname string) (float64, error) {
+	ans := float64(0)
+
+	activity, _, err := i.GetActivityByName(aname)
+	if err != nil {
+		return ans, err
+	}
+
+	tasks := activity.GetAllTasksList()
+
+	// Creating the rta map with the work time
+	rOpts := specs.TimesheetResearch{
+		ByTask:     true,
+		IgnoreTime: true,
+	}
+	rtaMap, err := i.GetAggregatedTimesheetsMap(
+		rOpts, "", "", []string{}, []string{aname},
+	)
+	if err != nil {
+		return ans, err
+	}
+
+	totEffort := int64(0)
+	totEffectiveWorked := int64(0)
+
+	for idx, _ := range tasks {
+
+		tSecs := int64(0)
+
+		if tasks[idx].Effort != "" {
+			tSecs, err = tmtime.ParseDuration(
+				tasks[idx].Effort, i.Config.GetWork().WorkHours,
+			)
+			if err != nil {
+				return ans, err
+			}
+		}
+
+		rta, ok := rtaMap[tasks[idx].Name]
+		if ok {
+
+			// If the worked effort is greather than effort i using all worked
+			// effort.
+			if tasks[idx].IsCompleted() || rta.Seconds > tSecs {
+				totEffort += rta.Seconds
+				totEffectiveWorked += rta.Seconds
+			} else {
+				totEffort += tSecs
+				totEffectiveWorked += rta.Seconds
+			}
+		} else if tSecs > 0 {
+
+			// POST: no hours worked
+			totEffort += tSecs
+			if tasks[idx].IsCompleted() {
+				totEffectiveWorked += tSecs
+			}
+		}
+	}
+
+	if totEffort > 0 && totEffectiveWorked > 0 {
+		ans = (float64(totEffectiveWorked) * 100) / float64(totEffort)
+	}
+
+	return ans, err
+}
 
 func (i *TimeMasterInstance) GetActivities(opts specs.ActivityResearch) ([]specs.Activity, error) {
 	ans := []specs.Activity{}

@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2020-2021  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
 and was really source of ispiration. Kudos to them!
@@ -237,14 +237,44 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 					aReport.SetWork(work)
 					aReport.CalculateProfitPerc()
 					aReport.CalculateDuration()
+
+					if scenario != "" {
+						// Calculate business progress
+						bProgress, err := tm.CalculateActivityBusinessProgress(activity.Name)
+						if err != nil {
+							fmt.Println(err.Error())
+							os.Exit(1)
+						}
+						bprogressPerc := fmt.Sprintf("%02.02f", bProgress)
+
+						if activity.Closed {
+							// I consider closed the job
+							aReport.SetBusinessProgressPerc("100.0")
+						} else {
+							aReport.SetBusinessProgressPerc(bprogressPerc)
+						}
+					}
 				} else {
 					// Reset effort/secs
 					aReport.SetEffort(0)
 					aReport.SetWorkSecs(0)
+					aReport.SetWorkPerc("")
 
-					if activity.Closed {
-						// I consider closed the job
-						aReport.SetWorkPerc("100.0")
+					if scenario != "" {
+						// Calculate business progress
+						bProgress, err := tm.CalculateActivityBusinessProgress(activity.Name)
+						if err != nil {
+							fmt.Println(err.Error())
+							os.Exit(1)
+						}
+						bprogressPerc := fmt.Sprintf("%02.02f", bProgress)
+
+						if activity.Closed {
+							// I consider closed the job
+							aReport.SetBusinessProgressPerc("100.0")
+						} else {
+							aReport.SetBusinessProgressPerc(bprogressPerc)
+						}
 					}
 				}
 
@@ -268,11 +298,15 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				var table *tablewriter.Table
 				records := make([][]string, len(activitiesReport)+1)
 
-				headers := []string{"Name", "Description", "% (of Plan)"}
+				headers := []string{
+					"Name", "Description", "Business Progress",
+				}
 				if !minimal {
-					headers = append(headers, []string{"# Tasks", "Work", "Effort"}...)
+					headers = append(headers, []string{"% (of Plan)", "# Tasks", "Work", "Effort"}...)
 					if scenario != "" {
-						headers = append(headers, []string{"Cost", "Offer", "Revenue Plan", "Profit", "% Profit"}...)
+						headers = append(headers, []string{
+							"Cost", "Offer", "Revenue Plan", "Profit", "% Profit",
+						}...)
 					}
 				}
 
@@ -309,6 +343,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 						if scenario != "" {
 							profit_perc := fmt.Sprintf("%02.02f", ((float64(totProfit) * 100) / float64(totCost+totProfit)))
 							footers = append(footers, []string{
+								durationWork,
 								fmt.Sprintf("%02.02f", totCost),
 								fmt.Sprintf("%d", totOffer),
 								fmt.Sprintf("%02.02f", totRevenueRate),
@@ -347,6 +382,7 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 						if scenario != "" {
 
+							row = append(row, activity.BusinessProgressPerc)
 							row = append(row, fmt.Sprintf("%02.02f", activity.Cost))
 							row = append(row, fmt.Sprintf("%d", activity.Offer))
 							row = append(row, fmt.Sprintf("%02.02f", activity.RevenuePlan))
