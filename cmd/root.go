@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2020-2021  Daniele Rondina <geaaru@funtoo.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
 and was really source of ispiration. Kudos to them!
@@ -38,12 +38,9 @@ const (
 
 Time Master`
 
-	TM_VERSION = `0.3.1`
+	TM_VERSION = `0.4.0`
 )
 
-// Build time and commit information. This code is get from: https://github.com/mudler/luet/
-//
-// ⚠️ WARNING: should only be set by "-ldflags".
 var (
 	BuildTime   string
 	BuildCommit string
