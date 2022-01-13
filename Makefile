@@ -20,9 +20,9 @@ fmt:
 
 .PHONY: test
 test:
-	GO111MODULE=off go get github.com/onsi/ginkgo/ginkgo
+	GO111MODULE=on go get github.com/onsi/ginkgo/v2/ginkgo
 	GO111MODULE=off go get github.com/onsi/gomega/...
-	ginkgo -race -r -flakeAttempts 3 ./...
+	ginkgo -r -race -flake-attempts 3 ./...
 
 .PHONY: coverage
 coverage:
@@ -43,7 +43,7 @@ deps:
 	GO111MODULE=off go get golang.org/x/lint/golint
 	GO111MODULE=off go get github.com/mitchellh/gox
 	GO111MODULE=off go get golang.org/x/tools/cmd/cover
-	GO111MODULE=off go get github.com/onsi/ginkgo/ginkgo
+	GO111MODULE=on go get github.com/onsi/ginkgo/v2/ginkgo
 	GO111MODULE=off go get github.com/onsi/gomega/...
 
 .PHONY: build
@@ -62,6 +62,11 @@ lint:
 .PHONY: vendor
 vendor:
 	go mod vendor
+
+.PHONY: goreleaser-snapshot
+goreleaser-snapshot:
+	rm -rf dist/ || true
+	goreleaser release --debug --skip-publish  --skip-validate --snapshot
 
 .PHONY: multiarch-build
 multiarch-build:
