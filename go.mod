@@ -1,11 +1,13 @@
 module github.com/geaaru/time-master
 
-go 1.14
+go 1.16
 
 replace github.com/docker/docker => github.com/Luet-lab/moby v17.12.0-ce-rc1.0.20200605210607-749178b8f80d+incompatible
 
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc9.0.20200221051241-688cf6d43cc4
+
 require (
-	github.com/MottainaiCI/mottainai-server v0.1.0
+	github.com/MottainaiCI/mottainai-server v0.1.1
 	github.com/kyokomi/emoji v2.2.4+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/olekukonko/tablewriter v0.0.5
