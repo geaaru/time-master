@@ -2,10 +2,6 @@ module github.com/geaaru/time-master
 
 go 1.16
 
-replace github.com/docker/docker => github.com/Luet-lab/moby v17.12.0-ce-rc1.0.20200605210607-749178b8f80d+incompatible
-
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc9.0.20200221051241-688cf6d43cc4
-
 require (
 	github.com/MottainaiCI/mottainai-server v0.1.1
 	github.com/containerd/containerd v1.5.9 // indirect
@@ -14,6 +10,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.1.1
 	github.com/onsi/gomega v1.17.0
+	github.com/opencontainers/runc v1.0.3 // indirect
 	github.com/rickb777/date v1.16.1
 	github.com/spf13/afero v1.8.0 // indirect
 	github.com/spf13/cobra v1.3.0
