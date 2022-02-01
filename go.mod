@@ -8,6 +8,7 @@ replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-
 
 require (
 	github.com/MottainaiCI/mottainai-server v0.1.1
+	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/kyokomi/emoji v2.2.4+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/olekukonko/tablewriter v0.0.5
