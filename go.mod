@@ -14,9 +14,11 @@ require (
 	github.com/onsi/ginkgo/v2 v2.1.1
 	github.com/onsi/gomega v1.17.0
 	github.com/rickb777/date v1.16.1
+	github.com/spf13/afero v1.8.0 // indirect
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/viper v1.9.0
+	github.com/spf13/viper v1.10.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
+	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )

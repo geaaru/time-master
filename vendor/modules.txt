@@ -51,7 +51,7 @@ github.com/emirpasic/gods/lists/arraylist
 github.com/emirpasic/gods/trees
 github.com/emirpasic/gods/trees/binaryheap
 github.com/emirpasic/gods/utils
-# github.com/fatih/color v1.9.0
+# github.com/fatih/color v1.13.0
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.5.1
 github.com/fsnotify/fsnotify
@@ -96,7 +96,7 @@ github.com/kyokomi/emoji
 github.com/logrusorgru/aurora
 # github.com/magiconair/properties v1.8.5
 github.com/magiconair/properties
-# github.com/mattn/go-colorable v0.1.11
+# github.com/mattn/go-colorable v0.1.12
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.14
 github.com/mattn/go-isatty
@@ -104,7 +104,7 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.4.2
+# github.com/mitchellh/mapstructure v1.4.3
 github.com/mitchellh/mapstructure
 # github.com/moby/sys/mount v0.1.1-0.20200320164225-6154f11e6840
 github.com/moby/sys/mount
@@ -165,7 +165,8 @@ github.com/rivo/uniseg
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
-# github.com/spf13/afero v1.6.0
+# github.com/spf13/afero v1.8.0
+## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.4.1
@@ -177,7 +178,7 @@ github.com/spf13/cobra
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/spf13/viper v1.9.0
+# github.com/spf13/viper v1.10.1
 ## explicit
 github.com/spf13/viper
 github.com/spf13/viper/internal/encoding
@@ -206,7 +207,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+# golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
@@ -258,9 +259,9 @@ golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# google.golang.org/genproto v0.0.0-20211101144312-62acf1d99145
+# google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.41.0
+# google.golang.org/grpc v1.43.0
 google.golang.org/grpc/codes
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/status
@@ -297,7 +298,8 @@ google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/clog.v1 v1.2.0
 gopkg.in/clog.v1
-# gopkg.in/ini.v1 v1.63.2
+# gopkg.in/ini.v1 v1.66.3
+## explicit
 gopkg.in/ini.v1
 # gopkg.in/src-d/go-billy.v4 v4.3.0
 gopkg.in/src-d/go-billy.v4
