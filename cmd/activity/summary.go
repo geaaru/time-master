@@ -299,12 +299,13 @@ func NewSummaryCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				records := make([][]string, len(activitiesReport)+1)
 
 				headers := []string{
-					"Name", "Description", "Business Progress",
+					"Name", "Description",
 				}
 				if !minimal {
 					headers = append(headers, []string{"% (of Plan)", "# Tasks", "Work", "Effort"}...)
 					if scenario != "" {
 						headers = append(headers, []string{
+							"Business Progress",
 							"Cost", "Offer", "Revenue Plan", "Profit", "% Profit",
 						}...)
 					}
