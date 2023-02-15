@@ -24,7 +24,7 @@ package specs
 import (
 	"errors"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func ClientFromYaml(data []byte, file string) (*Client, error) {

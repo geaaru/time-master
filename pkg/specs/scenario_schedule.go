@@ -27,7 +27,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func (s *ScenarioSchedule) Write2File(f string) error {

@@ -27,7 +27,7 @@ import (
 
 	time "github.com/geaaru/time-master/pkg/time"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func ResourceFromYaml(data []byte, file string) (*Resource, error) {

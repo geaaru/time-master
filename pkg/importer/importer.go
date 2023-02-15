@@ -31,7 +31,7 @@ import (
 	log "github.com/geaaru/time-master/pkg/logger"
 	specs "github.com/geaaru/time-master/pkg/specs"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ImportOpts struct {
