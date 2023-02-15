@@ -6,13 +6,16 @@ package date
 
 import (
 	"fmt"
+	"io"
 	"strings"
 )
 
 // These are predefined layouts for use in Date.Format and Date.Parse.
 // The reference date used in the layouts is the same date used by the
 // time package in the standard library:
-//     Monday, Jan 2, 2006
+//
+//	Monday, Jan 2, 2006
+//
 // To define your own format, write down what the reference date would look
 // like formatted your way; see the values of the predefined layouts for
 // examples. The model is to demonstrate what the reference date looks like
@@ -35,11 +38,22 @@ const (
 // with possibly extra year digits beyond the prescribed four-digit minimum
 // and with a + or - sign prefix (e.g. , "+12345-06-07", "-0987-06-05").
 func (d Date) String() string {
+	buf := &strings.Builder{}
+	buf.Grow(12)
+	d.WriteTo(buf)
+	return buf.String()
+}
+
+// WriteTo is as per String, albeit writing to an io.Writer.
+func (d Date) WriteTo(w io.Writer) (n64 int64, err error) {
+	var n int
 	year, month, day := d.Date()
 	if 0 <= year && year < 10000 {
-		return fmt.Sprintf("%04d-%02d-%02d", year, month, day)
+		n, err = fmt.Fprintf(w, "%04d-%02d-%02d", year, month, day)
+	} else {
+		n, err = fmt.Fprintf(w, "%+05d-%02d-%02d", year, month, day)
 	}
-	return fmt.Sprintf("%+05d-%02d-%02d", year, month, day)
+	return int64(n), err
 }
 
 // FormatISO returns a textual representation of the date value formatted
@@ -64,7 +78,9 @@ func (d Date) FormatISO(yearDigits int) string {
 // Format returns a textual representation of the date value formatted according
 // to layout, which defines the format by showing how the reference date,
 // defined to be
-//     Mon, Jan 2, 2006
+//
+//	Mon, Jan 2, 2006
+//
 // would be displayed if it were the value; it serves as an example of the
 // desired output.
 //
@@ -74,7 +90,9 @@ func (d Date) FormatISO(yearDigits int) string {
 //
 // Additionally, it is able to insert the day-number suffix into the output string.
 // This is done by including "nd" in the format string, which will become
-//     Mon, Jan 2nd, 2006
+//
+//	Mon, Jan 2nd, 2006
+//
 // For example, New Year's Day might be rendered as "Fri, Jan 1st, 2016". To alter
 // the suffix strings for a different locale, change DaySuffixes or use FormatWithSuffixes
 // instead.

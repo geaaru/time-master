@@ -2,7 +2,6 @@
 cd "$(dirname $0)"
 PATH=$HOME/go/bin:$PATH
 unset GOPATH
-export GO111MODULE=on
 export GOARCH=${1}
 
 function v
@@ -17,10 +16,12 @@ if ! type -p goveralls; then
 fi
 
 if ! type -p shadow; then
+  v go get     golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
   v go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
 fi
 
 if ! type -p goreturns; then
+  v go get     github.com/sqs/goreturns
   v go install github.com/sqs/goreturns
 fi
 
