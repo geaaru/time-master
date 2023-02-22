@@ -32,7 +32,7 @@ import (
 	specs "github.com/geaaru/time-master/pkg/specs"
 	"github.com/geaaru/time-master/pkg/tools"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 type TmJiraImporter struct {

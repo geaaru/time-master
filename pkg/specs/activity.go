@@ -25,7 +25,7 @@ import (
 	"errors"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 func ActivityFromYaml(data []byte, file string) (*Activity, error) {
