@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	specs "github.com/geaaru/time-master/pkg/specs"
+	utils "github.com/geaaru/time-master/pkg/tools"
 
-	utils "github.com/MottainaiCI/mottainai-server/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
