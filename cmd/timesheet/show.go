@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package cmd_timesheet
 
@@ -68,11 +66,11 @@ func prepareTableByUser(rtaList *[]specs.ResourceTsAggregated, jsonOutput bool) 
 	headers := []string{"User"}
 	footers := []string{""}
 
-	for user, _ := range mapUsers {
+	for user := range mapUsers {
 		users = append(users, user)
 	}
 
-	for date, _ := range mapDates {
+	for date := range mapDates {
 		dates = append(dates, date)
 	}
 

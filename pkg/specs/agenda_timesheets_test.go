@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package specs_test
 
@@ -39,7 +37,7 @@ var _ = Describe("Agenda Timesheets Test", func() {
 			agenda := AgendaTimesheets{
 				Name: "test",
 				Timesheets: []ResourceTimesheet{
-					ResourceTimesheet{
+					{
 						Period: &Period{
 							StartPeriod: "2020-01-01",
 						},
@@ -47,7 +45,7 @@ var _ = Describe("Agenda Timesheets Test", func() {
 						Task:     "ACTIVITY1.task1",
 						Duration: "4d",
 					},
-					ResourceTimesheet{
+					{
 						Period: &Period{
 							StartPeriod: "2020-01-04",
 						},

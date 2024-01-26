@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020-2021  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package loader
 
@@ -147,7 +145,7 @@ func (i *TimeMasterInstance) GetAllTaskMap() map[string]specs.Task {
 
 func (i *TimeMasterInstance) GetActivityByName(aName string) (*specs.Activity, *specs.Client, error) {
 
-	for idx, _ := range i.Clients {
+	for idx := range i.Clients {
 		for idx_a, activity := range *i.Clients[idx].GetActivities() {
 			if activity.Name == aName {
 				return &(*i.Clients[idx].GetActivities())[idx_a], &i.Clients[idx], nil

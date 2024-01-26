@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package specs
 
@@ -197,7 +195,7 @@ func (t *Task) HasFlag(flag string) bool {
 }
 
 func (t *Task) HasLabelKey(key string) bool {
-	for k, _ := range t.Labels {
+	for k := range t.Labels {
 		if k == key {
 			return true
 		}
@@ -283,7 +281,7 @@ func (t *Task) InitDefaultPriority(prio int) {
 	}
 
 	if len(t.Tasks) > 0 {
-		for idx, _ := range t.Tasks {
+		for idx := range t.Tasks {
 			if t.Tasks[idx].Priority == 0 {
 				t.Tasks[idx].Priority = prio
 			}

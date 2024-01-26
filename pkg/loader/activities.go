@@ -50,7 +50,7 @@ func (i *TimeMasterInstance) CalculateActivityBusinessProgress(aname string) (fl
 	totEffort := int64(0)
 	totEffectiveWorked := int64(0)
 
-	for idx, _ := range tasks {
+	for idx := range tasks {
 
 		tSecs := int64(0)
 

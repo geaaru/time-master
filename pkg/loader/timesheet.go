@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package loader
 
@@ -37,7 +35,7 @@ func (i *TimeMasterInstance) CalculateTimesheetsCostAndRevenue(sName string) err
 		return err
 	}
 
-	for idx, _ := range i.Timesheets {
+	for idx := range i.Timesheets {
 		agenda := &i.Timesheets[idx]
 
 		for idx_t, rt := range agenda.Timesheets {
