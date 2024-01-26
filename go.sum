@@ -44,8 +44,8 @@ github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
-github.com/rickb777/date v1.20.1 h1:7MzSOc42Hbr5UXiQOihAAXoYDoeyzr0Hwvt+hCjBDV4=
-github.com/rickb777/date v1.20.1/go.mod h1:9MqjVxT6a/AQTA4nxj9E6G3ksQiMESTn9/9kfE+CvwU=
+github.com/rickb777/date v1.20.5 h1:Ybjz7J7ga9ui4VJizQpil0l330r6wkn6CicaoattIxQ=
+github.com/rickb777/date v1.20.5/go.mod h1:6BPrm3/aQI0I8jvlD1fAlm/86k5eSeTQ2mR5FEmTnSw=
 github.com/rickb777/plural v1.4.1 h1:5MMLcbIaapLFmvDGRT5iPk8877hpTPt8Y9cdSKRw9sU=
 github.com/rickb777/plural v1.4.1/go.mod h1:kdmXUpmKBJTS0FtG/TFumd//VBWsNTD7zOw7x4umxNw=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
