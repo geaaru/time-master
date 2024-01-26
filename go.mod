@@ -1,9 +1,8 @@
 module github.com/geaaru/time-master
 
-go 1.19
+go 1.20
 
 require (
-	github.com/MottainaiCI/mottainai-server v0.2.0
 	github.com/kyokomi/emoji v2.2.4+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/olekukonko/tablewriter v0.0.5
