@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package cmd_client
 
@@ -101,8 +99,12 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				(imp.(*importer.TmJiraImporter)).ImportMapper(mapper)
 
 				jiraBefore202009, _ := cmd.Flags().GetBool("jira-before202009")
+				jiraBefore202401, _ := cmd.Flags().GetBool("jira-before202401")
 				if jiraBefore202009 {
 					(imp.(*importer.TmJiraImporter)).SetBefore202009()
+				}
+				if jiraBefore202401 {
+					(imp.(*importer.TmJiraImporter)).SetBefore202401()
 				}
 			}
 
@@ -147,6 +149,7 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 		"Create a timesheet file for every user.")
 	flags.StringP("jira-mapper-file", "j", "", "Import jira resource mapper file.")
 	flags.Bool("jira-before202009", false, "Import CSV created before 2020-09")
+	flags.Bool("jira-before202401", false, "Import CSV created before 2024-01")
 	flags.Bool("stdout", false, "Print timesheets to stdout instead of write files.")
 
 	return cmd

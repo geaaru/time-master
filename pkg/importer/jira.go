@@ -1,6 +1,5 @@
 /*
-
-Copyright (C) 2020  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2020-2024  Daniele Rondina <geaaru@gmail.com>
 Credits goes also to Gogs authors, some code portions and re-implemented design
 are also coming from the Gogs project, which is using the go-macaron framework
 and was really source of ispiration. Kudos to them!
@@ -17,7 +16,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 */
 package importer
 
@@ -41,6 +39,7 @@ type TmJiraImporter struct {
 	IssueTaskMap    map[string]string
 	IgnoredIssueMap map[string]bool
 	Before202009    bool
+	Before202401    bool
 }
 
 type TmJiraMapper struct {
@@ -87,6 +86,10 @@ func NewTmJiraImporter(config *specs.TimeMasterConfig, tmDir, filePrefix string,
 
 func (i *TmJiraImporter) SetBefore202009() {
 	i.Before202009 = true
+}
+
+func (i *TmJiraImporter) SetBefore202401() {
+	i.Before202401 = true
 }
 
 func (i *TmJiraImporter) ImportMapper(mapper *TmJiraMapper) {
@@ -138,9 +141,11 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 			continue
 		}
 
-		descIdx := 23
+		descIdx := 30
 		if i.Before202009 {
 			descIdx = 22
+		} else if i.Before202401 {
+			descIdx = 23
 		}
 
 		jiraRows = append(jiraRows, TmJiraCsvRow{
