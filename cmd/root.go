@@ -32,11 +32,11 @@ import (
 )
 
 const (
-	cliName = `Copyright (c) 2020-2023 - Daniele Rondina
+	cliName = `Copyright (c) 2020-2024 - Daniele Rondina
 
 Time Master`
 
-	TM_VERSION = `0.4.1`
+	TM_VERSION = `0.5.0`
 )
 
 var (
