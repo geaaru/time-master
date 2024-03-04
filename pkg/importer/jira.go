@@ -40,6 +40,7 @@ type TmJiraImporter struct {
 	IgnoredIssueMap map[string]bool
 	Before202009    bool
 	Before202401    bool
+	Before202402    bool
 }
 
 type TmJiraMapper struct {
@@ -141,11 +142,13 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 			continue
 		}
 
-		descIdx := 30
+		descIdx := 31
 		if i.Before202009 {
 			descIdx = 22
 		} else if i.Before202401 {
 			descIdx = 23
+		} else if i.Before202402 {
+			descIdx = 30
 		}
 
 		jiraRows = append(jiraRows, TmJiraCsvRow{
