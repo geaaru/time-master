@@ -100,11 +100,15 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 
 				jiraBefore202009, _ := cmd.Flags().GetBool("jira-before202009")
 				jiraBefore202401, _ := cmd.Flags().GetBool("jira-before202401")
+				jiraBefore202408, _ := cmd.Flags().GetBool("jira-before202408")
 				if jiraBefore202009 {
 					(imp.(*importer.TmJiraImporter)).SetBefore202009()
 				}
 				if jiraBefore202401 {
 					(imp.(*importer.TmJiraImporter)).SetBefore202401()
+				}
+				if jiraBefore202408 {
+					(imp.(*importer.TmJiraImporter)).SetBefore202408()
 				}
 			}
 
@@ -150,6 +154,7 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	flags.StringP("jira-mapper-file", "j", "", "Import jira resource mapper file.")
 	flags.Bool("jira-before202009", false, "Import CSV created before 2020-09")
 	flags.Bool("jira-before202401", false, "Import CSV created before 2024-01")
+	flags.Bool("jira-before202408", false, "Import CSV created before 2024-08")
 	flags.Bool("stdout", false, "Print timesheets to stdout instead of write files.")
 
 	return cmd

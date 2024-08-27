@@ -41,6 +41,7 @@ type TmJiraImporter struct {
 	Before202009    bool
 	Before202401    bool
 	Before202402    bool
+	Before202408    bool
 }
 
 type TmJiraMapper struct {
@@ -93,6 +94,10 @@ func (i *TmJiraImporter) SetBefore202401() {
 	i.Before202401 = true
 }
 
+func (i *TmJiraImporter) SetBefore202408() {
+	i.Before202408 = true
+}
+
 func (i *TmJiraImporter) ImportMapper(mapper *TmJiraMapper) {
 	if len(mapper.Resources) > 0 {
 		for _, r := range mapper.Resources {
@@ -142,21 +147,33 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 			continue
 		}
 
-		descIdx := 31
+		dateIdx := 4
+		descIdx := 33
+		userIdx := 6
 		if i.Before202009 {
+			userIdx = 5
+			dateIdx = 3
 			descIdx = 22
 		} else if i.Before202401 {
+			userIdx = 5
+			dateIdx = 3
 			descIdx = 23
 		} else if i.Before202402 {
+			userIdx = 5
+			dateIdx = 3
 			descIdx = 30
+		} else if i.Before202408 {
+			userIdx = 5
+			dateIdx = 3
+			descIdx = 31
 		}
 
 		jiraRows = append(jiraRows, TmJiraCsvRow{
 			Issue:    row[0],
 			Descr:    strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(row[descIdx], "\n", ""), "\r", "")),
-			Date:     row[3],
+			Date:     row[dateIdx],
 			WorkTime: row[2],
-			User:     row[5],
+			User:     row[userIdx],
 		})
 
 		i.Logger.Debug("Parse row ", row)
