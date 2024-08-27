@@ -148,7 +148,7 @@ func (i *TmJiraImporter) LoadTimesheets(csvFile string) error {
 		}
 
 		dateIdx := 4
-		descIdx := 33
+		descIdx := 32
 		userIdx := 6
 		if i.Before202009 {
 			userIdx = 5
