@@ -8,7 +8,6 @@ PACKAGE_NAME ?= $(NAME)
 REVISION := $(shell git rev-parse --short HEAD || echo dev)
 VERSION := $(shell git describe --tags || echo $(REVISION))
 VERSION := $(shell echo $(VERSION) | sed -e 's/^v//g')
-BUILD_PLATFORMS ?= -osarch="linux/amd64" -osarch="linux/386" -osarch="linux/arm"
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: all
@@ -20,9 +19,9 @@ fmt:
 
 .PHONY: test
 test:
-	GO111MODULE=on go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
+	GO111MODULE=off go get github.com/onsi/ginkgo/v2/ginkgo
 	GO111MODULE=off go get github.com/onsi/gomega/...
-	ginkgo -r -race -flake-attempts 3 ./...
+	ginkgo -r -flake-attempts 3 ./...
 
 .PHONY: coverage
 coverage:
@@ -40,10 +39,9 @@ clean:
 deps:
 	go env
 	# Installing dependencies...
-	GO111MODULE=off go get golang.org/x/lint/golint
-	GO111MODULE=off go get github.com/mitchellh/gox
+	GO111MODULE=on go install -mod=mod golang.org/x/lint/golint
 	GO111MODULE=on go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
-	GO111MODULE=off go get github.com/onsi/gomega/...
+	go get github.com/onsi/gomega/...
 	ginkgo version
 
 .PHONY: build
@@ -66,8 +64,4 @@ vendor:
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot:
 	rm -rf dist/ || true
-	goreleaser release --debug --skip-publish  --skip-validate --snapshot
-
-.PHONY: multiarch-build
-multiarch-build:
-	CGO_ENABLED=0 gox $(BUILD_PLATFORMS) -ldflags '$(LDFLAGS)' -output="release/$(NAME)-$(VERSION)-{{.OS}}-{{.Arch}}"
+	goreleaser release --skip=validate,publish --snapshot --verbose
