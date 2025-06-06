@@ -19,8 +19,7 @@ fmt:
 
 .PHONY: test
 test:
-	GO111MODULE=off go get github.com/onsi/ginkgo/v2/ginkgo
-	GO111MODULE=off go get github.com/onsi/gomega/...
+	GO111MODULE=on go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
 	ginkgo -r -flake-attempts 3 ./...
 
 .PHONY: coverage
