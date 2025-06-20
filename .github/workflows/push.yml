@@ -30,7 +30,7 @@ jobs:
         with:
           install-only: true
 
-      - name: Build test
+      - name: Build time-master
         run: sudo -E env "PATH=$PATH" make goreleaser-snapshot
 
       - name: Tests
