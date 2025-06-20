@@ -46,6 +46,20 @@ func loadMapperFile(file string) (*importer.TmJiraMapper, error) {
 	return importer.TmJiraMapperFromYaml(content)
 }
 
+func loadKimaiMapperFile(file string) (*importer.TmKimaiMapper, error) {
+	fileAbs, err := filepath.Abs(file)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(fileAbs)
+	if err != nil {
+		return nil, err
+	}
+
+	return importer.TmKimaiMapperFromYaml(content)
+}
+
 func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "timesheet [file]",
@@ -58,8 +72,8 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			}
 
 			importType, _ := cmd.Flags().GetString("import-type")
-			if importType != "jira" {
-				fmt.Println("import-type supported is only 'jira'")
+			if importType != "jira" && importType != "kimai" {
+				fmt.Println("import-type supported is only 'jira' or 'kimai'")
 				os.Exit(1)
 			}
 
@@ -78,6 +92,7 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			targetPrefix, _ := cmd.Flags().GetString("target-prefix")
 			splitForUser, _ := cmd.Flags().GetBool("split-for-user")
 			jiraMapperFile, _ := cmd.Flags().GetString("jira-mapper-file")
+			kimaiMapperFile, _ := cmd.Flags().GetString("kimai-mapper-file")
 			stdout, _ := cmd.Flags().GetBool("stdout")
 
 			opts := importer.ImportOpts{
@@ -85,9 +100,11 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 			}
 
 			switch importType {
-			default:
-				// default jira
+			case "jira":
 				imp = importer.NewTmJiraImporter(config, dir, targetPrefix, opts)
+			default:
+				// Default kimai
+				imp = importer.NewTmKimaiImporter(config, dir, targetPrefix, opts)
 			}
 
 			if jiraMapperFile != "" && importType == "jira" {
@@ -110,6 +127,15 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 				if jiraBefore202408 {
 					(imp.(*importer.TmJiraImporter)).SetBefore202408()
 				}
+			}
+
+			if kimaiMapperFile != "" && importType == "kimai" {
+				mapper, err := loadKimaiMapperFile(kimaiMapperFile)
+				if err != nil {
+					fmt.Println("Error on load file " + kimaiMapperFile + ": " + err.Error())
+					os.Exit(1)
+				}
+				(imp.(*importer.TmKimaiImporter)).ImportMapper(mapper)
 			}
 
 			sourceFile := args[0]
@@ -145,17 +171,22 @@ func NewTimesheetCommand(config *specs.TimeMasterConfig) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringP("import-type", "i", "jira",
-		"Define type of the imported file. Now it's supported only Jira.")
+	flags.StringP("import-type", "i", "kimai",
+		"Define type of the imported file. Supported values: jira|kimai.")
 	flags.StringP("dir", "d", "", "Directory where import timesheets.")
 	flags.StringP("target-prefix", "p", "", "Prefix of the file/files to create.")
 	flags.BoolP("split-for-user", "s", false,
 		"Create a timesheet file for every user.")
-	flags.StringP("jira-mapper-file", "j", "", "Import jira resource mapper file.")
+	flags.Bool("stdout", false, "Print timesheets to stdout instead of write files.")
+
+	// Kimai options
+	flags.StringP("kimai-mapper-file", "k", "", "Import Kimai resource mapper file.")
+
+	// Jira options
+	flags.StringP("jira-mapper-file", "j", "", "Import Jira resource mapper file.")
 	flags.Bool("jira-before202009", false, "Import CSV created before 2020-09")
 	flags.Bool("jira-before202401", false, "Import CSV created before 2024-01")
 	flags.Bool("jira-before202408", false, "Import CSV created before 2024-08")
-	flags.Bool("stdout", false, "Print timesheets to stdout instead of write files.")
 
 	return cmd
 }
